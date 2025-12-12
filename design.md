@@ -91,6 +91,7 @@ fmt.Println("hello")
 |ユーザー登録| POST  |/users      |name/email/password                  | name/201| all  |
 |ユーザーログイン|POST|/auth      |email/password                       |access_token/refresh_token  | all  |
 ### エラー設計
+*todo*
 
 ## 3.アーキテクチャ
 DDDを採用
