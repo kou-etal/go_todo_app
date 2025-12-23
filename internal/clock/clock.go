@@ -1,4 +1,5 @@
 // アプリ共通のユーティリティ、大規模の場合internal/pkg/clock/clock.goに置く、loggerとかmetricsとか
+// utils/を作るのは便利箱になってあまり良くない。
 // 見せないというより切り替えのinterface
 package clock
 

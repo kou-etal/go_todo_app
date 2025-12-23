@@ -1,7 +1,7 @@
 package taskrepo
 
 import (
-	"errors"
+	"fmt"
 	"time"
 
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
@@ -13,22 +13,22 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 
 	title, err := dtask.NewTaskTitle(r.Title)
 	if err != nil {
-		return nil, errors.New("tmp")
-	}
+		return nil, fmt.Errorf("invalid task record id=%s field=title: %w", r.ID, err)
+	} //これはDBがバグってることによるエラーゆえにdomainのエラーは使わずにwrapして返す
 
 	description, err := dtask.NewTaskDescription(r.Description)
 	if err != nil {
-		return nil, errors.New("tmp")
+		return nil, fmt.Errorf("invalid task record id=%s field=description: %w", r.ID, err)
 	}
 
 	status, err := dtask.ParseTaskStatus(r.Status)
 	if err != nil {
-		return nil, errors.New("tmp")
+		return nil, fmt.Errorf("invalid task record id=%s field=status value=%q: %w", r.ID, r.Status, err)
 	}
 
 	due, err := dtask.NewDueDateFromTime(r.DueDate)
 	if err != nil {
-		return nil, errors.New("tmp")
+		return nil, fmt.Errorf("invalid task record id=%s field=dueDate: %w", r.ID, err)
 	}
 
 	return dtask.ReconstructTask(

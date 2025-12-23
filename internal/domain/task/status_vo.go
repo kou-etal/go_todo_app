@@ -22,3 +22,7 @@ func ParseTaskStatus(v string) (TaskStatus, error) {
 		return "", errors.New("tmp")
 	}
 }
+
+func (t TaskStatus) Value() string {
+	return string(t)
+} //これは抽象化、string(t)は表現

@@ -17,6 +17,7 @@ type Task struct {
 }
 
 type Tasks []*Task
+
 //TODO:Tasksを定義するならば定義に意味を持たせるようなメソッドをタスクに持たせる。ただ短いからTasksは微妙。
 
 func (t *Task) ID() TaskID                   { return t.id }
@@ -28,16 +29,6 @@ func (t *Task) CreatedAt() time.Time         { return t.createdAt }
 func (t *Task) UpdatedAt() time.Time         { return t.updatedAt }
 func (t *Task) Version() uint64              { return t.version }
 
-// mapperで使う。
-func (t TaskTitle) String() string {
-	return t.value
-}
-func (d TaskDescription) String() string {
-	return d.value
-}
-func (d DueDate) Time() time.Time {
-	return d.value
-}
 func (t *Task) ChangeTitle(newTitle TaskTitle, now time.Time) {
 	t.title = newTitle
 	t.touch(now)
@@ -64,6 +55,7 @@ func (t *Task) Reschedule(newDue DueDate, now time.Time) {
 	t.touch(now)
 }
 
+// MarkDoneに意味を持たせるならばchangestatusと分離
 func (t *Task) MarkDone(now time.Time) error {
 	return t.ChangeStatus(StatusDone, now)
 }

@@ -1,9 +1,31 @@
 package task
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
-//type Repositoryの議論
-type TaskRepository interface {
-	//Save(ctx context.Context, t *Task) error
-	ListAll(ctx context.Context) ([]*Task, error)
+type ListSort string
+
+const (
+	SortCreated ListSort = "created"
+	SortDueDate ListSort = "dueDate"
+)
+
+type ListCursor struct {
+	Created   time.Time
+	DueIsNull bool
+	DueDate   time.Time
+
+	ID TaskID
 }
+
+type ListQuery struct {
+	Limit  int
+	Sort   ListSort
+	Cursor *ListCursor
+}
+
+type TaskRepository interface {
+	List(ctx context.Context, q ListQuery) ([]*Task, *ListCursor, error)
+} //repositoryはinterface定義だけでqueryとかはlist.goに分けるべき

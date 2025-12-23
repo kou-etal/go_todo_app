@@ -80,3 +80,6 @@ DDDを採用
 
 *ここにinterfaceをどに置くか後ほど詳しく記述する*
 
+
+TODO:トランザクション、metrics、perf、公開API、
+middlewareは例えばuseridを与えたいってなった時にctxを通す
