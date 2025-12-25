@@ -2,6 +2,7 @@ package taskrepo
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 )
 
-type stubQueryer struct {
+type stubQueryerExecer struct {
 	gotSQL  string
 	gotArgs []any
 
@@ -19,7 +20,7 @@ type stubQueryer struct {
 	err     error
 }
 
-func (s *stubQueryer) SelectContext(ctx context.Context, dest any, query string, args ...any) error {
+func (s *stubQueryerExecer) SelectContext(ctx context.Context, dest any, query string, args ...any) error {
 	s.gotSQL = query
 	s.gotArgs = args
 
@@ -35,7 +36,7 @@ func (s *stubQueryer) SelectContext(ctx context.Context, dest any, query string,
 	//(*p)[:0]は中身を空にしたスライス、append先として再利用するための定番実装
 	return nil
 }
-func (s *stubQueryer) GetContext(
+func (s *stubQueryerExecer) GetContext(
 	ctx context.Context,
 	dest any,
 	query string,
@@ -44,25 +45,40 @@ func (s *stubQueryer) GetContext(
 	return errors.New("stubQueryer.GetContext : unexpected call")
 }
 
-func (s *stubQueryer) QueryxContext(
+func (s *stubQueryerExecer) QueryxContext(
 	ctx context.Context,
 	query string,
 	args ...any,
 ) (*sqlx.Rows, error) {
 	return nil, errors.New("stubQueryer.QueryxContext: unexpected call")
 }
-func (s *stubQueryer) QueryRowxContext(
+func (s *stubQueryerExecer) QueryRowxContext(
 	ctx context.Context,
 	query string,
 	args ...any,
 ) *sqlx.Row {
 	panic("stubQueryer.QueryRowxContext: unexpected call")
 }
-func (s *stubQueryer) PreparexContext(
+func (s *stubQueryerExecer) PreparexContext(
 	ctx context.Context,
 	query string,
 ) (*sqlx.Stmt, error) {
 	return nil, errors.New("stubQueryer.PreparexContext: unexpected call")
+}
+func (s *stubQueryerExecer) ExecContext(
+	ctx context.Context,
+	query string,
+	args ...any,
+) (sql.Result, error) {
+	return nil, errors.New("stubQueryerExecuer.ExecContext: unexpected call")
+}
+
+func (s *stubQueryerExecer) NamedExecContext(
+	ctx context.Context,
+	query string,
+	arg any,
+) (sql.Result, error) {
+	return nil, errors.New("stubQueryerExecuer.NamedExecContext: unexpected call")
 }
 
 // TaskRecord作成のヘルパー。
@@ -84,8 +100,8 @@ func mustRecord(id string, created time.Time, due time.Time) TaskRecord {
 func TestRepository_List_defaultLimitAndSort(t *testing.T) {
 	t.Parallel()
 
-	qr := &stubQueryer{}
-	repo := NewRepository(qr)
+	qe := &stubQueryerExecer{}
+	repo := NewRepository(qe)
 
 	_, _, err := repo.List(context.Background(), dtask.ListQuery{
 		Limit:  50,
@@ -96,15 +112,15 @@ func TestRepository_List_defaultLimitAndSort(t *testing.T) {
 		t.Fatalf("List() unexpected error: %v", err)
 	}
 
-	if !strings.Contains(qr.gotSQL, "ORDER BY created DESC, id DESC") {
-		t.Fatalf("sql missing created order:\n%s", qr.gotSQL)
+	if !strings.Contains(qe.gotSQL, "ORDER BY created_at DESC, id DESC") {
+		t.Fatalf("sql missing created order:\n%s", qe.gotSQL)
 	}
 
 	//dbLimit=q.Limit+1=51がargsの最後に入る
-	if len(qr.gotArgs) == 0 {
+	if len(qe.gotArgs) == 0 {
 		t.Fatalf("args is empty")
 	}
-	last := qr.gotArgs[len(qr.gotArgs)-1]
+	last := qe.gotArgs[len(qe.gotArgs)-1]
 	if last != 51 {
 		t.Fatalf("limit arg = %v, want 51", last)
 	}
@@ -113,8 +129,8 @@ func TestRepository_List_defaultLimitAndSort(t *testing.T) {
 func TestRepository_List_createdCursor_buildsWhereAndArgs(t *testing.T) {
 	t.Parallel()
 
-	qr := &stubQueryer{}
-	repo := NewRepository(qr)
+	qe := &stubQueryerExecer{}
+	repo := NewRepository(qe)
 
 	cur := &dtask.ListCursor{
 		Created: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
@@ -130,14 +146,14 @@ func TestRepository_List_createdCursor_buildsWhereAndArgs(t *testing.T) {
 		t.Fatalf("List() unexpected error: %v", err)
 	}
 
-	if !strings.Contains(qr.gotSQL, "WHERE (created, id) < (?, ?)") {
-		t.Fatalf("sql missing created cursor where:\n%s", qr.gotSQL)
+	if !strings.Contains(qe.gotSQL, "WHERE (created_at, id) < (?, ?)") {
+		t.Fatalf("sql missing created cursor where:\n%s", qe.gotSQL)
 	}
 	//created,id,limitの三つ。詳細確認はしない。
 	//TODO:と思ったけどこれはrepoの責務だから、もう一段だけ強くして詳細確認するべきかも
 	//qr.gotArgs[0] が cur.Created、qr.gotArgs[1] が cur.ID.Value()、qr.gotArgs[2] が 11
-	if len(qr.gotArgs) != 3 {
-		t.Fatalf("args len = %d, want 3 (created,id,limit)", len(qr.gotArgs))
+	if len(qe.gotArgs) != 3 {
+		t.Fatalf("args len = %d, want 3 (created_at,id,limit)", len(qe.gotArgs))
 	}
 }
 
@@ -166,7 +182,7 @@ func TestRepository_List_hasNext_trimsAndReturnsNextCursor(t *testing.T) {
 	created3 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	// Limit=2でrecords=3を返してhasNextを発火させる
-	qr := &stubQueryer{
+	qr := &stubQueryerExecer{
 		records: []TaskRecord{
 			mustRecord("id-3", created1, time.Time{}),
 			mustRecord("id-2", created2, time.Time{}),

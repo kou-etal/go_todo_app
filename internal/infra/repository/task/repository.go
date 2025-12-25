@@ -10,13 +10,15 @@ import (
 )
 
 type Repository struct {
-	q db.Queryer
-}
+	q db.QueryerExecer
+} //packageのstructは同一。これやとsaveのexecuer不可
 
 var _ dtask.TaskRepository = (*Repository)(nil)
 
-func NewRepository(q db.Queryer) *Repository {
-	return &Repository{q: q}
+func NewRepository(qe db.QueryerExecer) *Repository {
+	return &Repository{
+		q: qe,
+	}
 }
 
 func (r *Repository) List(ctx context.Context, q dtask.ListQuery) ([]*dtask.Task, *dtask.ListCursor, error) {
@@ -38,15 +40,15 @@ func (r *Repository) List(ctx context.Context, q dtask.ListQuery) ([]*dtask.Task
 
 	sb.WriteString(`
 SELECT
-  id, title, description, status, dueDate,
-  created, updated, version
+  id, title, description, status, due_date,
+  created_at, updated_at, version
 FROM task
 `)
 
 	if q.Cursor != nil {
 		switch q.Sort {
 		case dtask.SortCreated:
-			sb.WriteString("WHERE (created, id) < (?, ?)\n")
+			sb.WriteString("WHERE (created_at, id) < (?, ?)\n")
 			//ORDER BY と WHERE のキー一致WHERE (created < ? OR (created = ? AND id < ?))よりもいい
 			args = append(args, q.Cursor.Created, q.Cursor.ID.Value())
 			//args = append(args, q.Cursor.Created.UTC(), q.Cursor.Created.UTC(), q.Cursor.ID.String())
@@ -56,7 +58,7 @@ FROM task
 		case dtask.SortDueDate:
 			if !q.Cursor.DueIsNull {
 				//WHERE ((dueDate IS NULL) > :DueIsNull) OR ((dueDate IS NULL)=:DueIsNull AND (dueDate, id) > (:DueDate, :ID))こっちが正しい。
-				sb.WriteString("WHERE (due_is_null, dueDate, id) > (?, ?, ?)\n")
+				sb.WriteString("WHERE (due_is_null, due_date, id) > (?, ?, ?)\n")
 				dueIsNull := 0
 				if q.Cursor.DueIsNull {
 					dueIsNull = 1
@@ -66,7 +68,7 @@ FROM task
 				//WHERE ((dueDate IS NOT NULL AND (dueDate > ? OR (dueDate = ? AND id > ?))) OR (dueDate IS NULL))これは式を含んでるから遅くなる。columnにする。
 				//args = append(args, q.Cursor.DueDate, q.Cursor.DueDate, q.Cursor.ID.Value())
 			} else {
-				sb.WriteString("WHERE (dueDate IS NULL AND id > ?)\n")
+				sb.WriteString("WHERE (due_date IS NULL AND id > ?)\n")
 				args = append(args, q.Cursor.ID.Value())
 			}
 
@@ -77,10 +79,10 @@ FROM task
 
 	switch q.Sort {
 	case dtask.SortCreated:
-		sb.WriteString("ORDER BY created DESC, id DESC\n")
+		sb.WriteString("ORDER BY created_at DESC, id DESC\n")
 	case dtask.SortDueDate:
 
-		sb.WriteString("ORDER BY due_is_null ASC, dueDate ASC, id ASC\n")
+		sb.WriteString("ORDER BY due_is_null ASC, due_date ASC, id ASC\n")
 		//ORDER BY (dueDate IS NULL) ASC, dueDate ASC, id ASC
 	default:
 		return nil, nil, dtask.ErrInvalidSort
