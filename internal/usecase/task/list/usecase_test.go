@@ -22,6 +22,9 @@ func (s *stubRepo) List(ctx context.Context, q dtask.ListQuery) ([]*dtask.Task, 
 	s.gotQuery = q
 	return s.tasks, s.next, s.err
 }
+func (s *stubRepo) Store(ctx context.Context, t *dtask.Task) error {
+	return nil //TODO:テスト
+}
 
 var _ dtask.TaskRepository = (*stubRepo)(nil)
 

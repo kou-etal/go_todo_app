@@ -6,6 +6,7 @@ var (
 	ErrInvalidSort   = errors.New("invalid sort")
 	ErrInvalidCursor = errors.New("invalid cursor")
 	ErrInvalidLimit  = errors.New("invalid limit")
+	ErrConflict      = errors.New("taskrepo: conflict")
 )
 
 /*
