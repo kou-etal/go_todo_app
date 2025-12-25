@@ -1,7 +1,6 @@
 package task
 
 import (
-	"errors"
 	"strings"
 	"unicode/utf8"
 )
@@ -12,10 +11,10 @@ type TaskTitle struct {
 
 func NewTaskTitle(v string) (TaskTitle, error) {
 	if strings.TrimSpace(v) == "" {
-		return TaskTitle{}, errors.New("tmp")
+		return TaskTitle{}, ErrEmptyTitle
 	}
 	if utf8.RuneCountInString(v) > 20 {
-		return TaskTitle{}, errors.New("tmp")
+		return TaskTitle{}, ErrTitleTooLong
 	}
 
 	return TaskTitle{value: v}, nil

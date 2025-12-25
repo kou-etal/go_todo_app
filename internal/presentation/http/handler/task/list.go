@@ -103,6 +103,7 @@ type listItem struct {
 	DueDate     *string `json:"due_date,omitempty"`
 }
 
+// entity->result->http
 func toHTTPListResponse(res list.Result) listResponse {
 	items := make([]listItem, 0, len(res.Items))
 	for _, it := range res.Items {

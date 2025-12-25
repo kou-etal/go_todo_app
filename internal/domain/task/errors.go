@@ -7,6 +7,8 @@ var (
 	ErrInvalidCursor = errors.New("invalid cursor")
 	ErrInvalidLimit  = errors.New("invalid limit")
 	ErrConflict      = errors.New("taskrepo: conflict")
+	ErrEmptyTitle    = errors.New("need title") //入力不正の詳細
+	ErrTitleTooLong  = errors.New("too long title")
 )
 
 /*
