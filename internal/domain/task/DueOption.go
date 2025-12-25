@@ -3,8 +3,8 @@ package task
 type DueOption int
 
 const (
-	Due7Days   DueOption = 7
-	Due30Days  DueOption = 30
-	Due90Days  DueOption = 90
-	Due365Days DueOption = 365
+	Due7Days  DueOption = 7
+	Due14Days DueOption = 14
+	Due21Days DueOption = 21
+	Due30Days DueOption = 30
 )

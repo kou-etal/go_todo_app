@@ -46,7 +46,7 @@ func ReconstructTask(
 	}
 }
 
-const maxDueDays = 365 //気遣い
+const maxDueDays = 30 //気遣い
 
 func NewDueDateFromOption(now time.Time, opt DueOption) (DueDate, error) {
 	now = normalizeTime(now) //factory側で秒
