@@ -46,8 +46,8 @@ func (h *ListTasksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		limit, err := strconv.Atoi(v)
 		if err != nil {
 			//4xxはログ欲しければDebugに落とす。機密注意。
-			h.logger.Debug(ctx, "invalid limit", logger.String("limit", v))
-			responder.JSON(w, http.StatusBadRequest, errResponse{
+			h.logger.Debug(ctx, "invalid limit", nil, logger.String("limit", v))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
 				Message: "invalid limit",
 			})
 			//入力不正
@@ -58,13 +58,14 @@ func (h *ListTasksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.uc.Do(ctx, q)
 	if err != nil {
+		//TODO:domainのエラーはusecaseで吸収する
 		switch {
 		case errors.Is(err, dtask.ErrInvalidCursor),
 			errors.Is(err, dtask.ErrInvalidLimit),
 			errors.Is(err, dtask.ErrInvalidSort):
-			h.logger.Debug(ctx, "invalid query")
+			h.logger.Debug(ctx, "invalid query", nil)
 			//Attrは可変長引数　0でもok
-			responder.JSON(w, http.StatusBadRequest, errResponse{
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
 				Message: "invalid query",
 			})
 			//TODO:セキュリティ配慮とクライアント体験のトレードオフ、どこまでエラー返すか考える
@@ -75,7 +76,7 @@ func (h *ListTasksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			//プログラムの破綻
 			h.logger.Error(ctx, "list tasks failed", err)
-			responder.JSON(w, http.StatusInternalServerError, errResponse{
+			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{
 				Message: "internal server error",
 			})
 			return
@@ -87,9 +88,7 @@ func (h *ListTasksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	responder.JSON(w, http.StatusOK, out)
 }
 
-type errResponse struct {
-	Message string `json:"message"`
-}
+// これどこに置こうか
 type listResponse struct {
 	Items      []listItem `json:"items"`
 	NextCursor string     `json:"next_cursor,omitempty"`
