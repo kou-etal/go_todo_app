@@ -24,9 +24,10 @@ func NewSlog() Logger {
 	}
 }
 
-func (s *slogLogger) Debug(ctx context.Context, msg string, attrs ...Attr) {
-	s.l.Debug(msg, s.buildAttrs(ctx, nil, attrs...)...)
-}
+func (s *slogLogger) Debug(ctx context.Context, msg string, err error, attrs ...Attr) {
+	s.l.Debug(msg, s.buildAttrs(ctx, err, attrs...)...)
+} //debugはエラーを返さない設計だったがエラーを返す設計に変更。
+//TODO:それに伴いセキュリティを考慮しエラーをsafeエラーかどうか判定する実装必須。
 
 func (s *slogLogger) Info(ctx context.Context, msg string, attrs ...Attr) {
 	s.l.Info(msg, s.buildAttrs(ctx, nil, attrs...)...)

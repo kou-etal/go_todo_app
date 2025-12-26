@@ -3,12 +3,15 @@ package task
 import "errors"
 
 var (
-	ErrInvalidSort   = errors.New("invalid sort")
-	ErrInvalidCursor = errors.New("invalid cursor")
-	ErrInvalidLimit  = errors.New("invalid limit")
-	ErrConflict      = errors.New("taskrepo: conflict")
-	ErrEmptyTitle    = errors.New("need title") //入力不正の詳細
-	ErrTitleTooLong  = errors.New("too long title")
+	ErrInvalidSort        = errors.New("invalid sort")
+	ErrInvalidCursor      = errors.New("invalid cursor")
+	ErrInvalidLimit       = errors.New("invalid limit")
+	ErrConflict           = errors.New("taskrepo: conflict")
+	ErrEmptyTitle         = errors.New("need title") //入力不正の詳細
+	ErrTitleTooLong       = errors.New("too long title")
+	ErrEmptyDescription   = errors.New("need description")
+	ErrDescriptionTooLong = errors.New("too long description")
+	ErrInvalidDueOption   = errors.New("invalid due")
 )
 
 /*

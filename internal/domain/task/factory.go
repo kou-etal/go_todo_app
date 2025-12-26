@@ -1,7 +1,6 @@
 package task
 
 import (
-	"errors"
 	"time"
 )
 
@@ -52,17 +51,16 @@ func NewDueDateFromOption(now time.Time, opt DueOption) (DueDate, error) {
 	now = normalizeTime(now) //factory側で秒
 
 	if opt <= 0 {
-		return DueDate{}, errors.New("tmp")
+		return DueDate{}, ErrInvalidDueOption
 	}
 	//TODO:キャストするの良くないらしい
 	if int(opt) > maxDueDays {
-		return DueDate{}, errors.New("tmp")
+		return DueDate{}, ErrInvalidDueOption
 	}
-
 	target := now.AddDate(0, 0, int(opt))
 
 	if target.Before(now) {
-		return DueDate{}, errors.New("tmp")
+		return DueDate{}, ErrInvalidDueOption
 	} //保険
 	//TODO:保険でも読む側に負担与えるならば良くない
 

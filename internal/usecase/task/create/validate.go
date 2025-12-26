@@ -13,7 +13,7 @@ var (
 	ErrInvalidTitle       = errors.New("invalid title")
 	ErrInvalidDescription = errors.New("invalid description")
 	ErrInvalidDueOption   = errors.New("invalid due_option")
-)
+) //ここでエラー定義するのどうなん。ファイル作ったほうがいいか
 
 const (
 	//ドメイン20文字制限やけど巨大なデータ防ぐためにここである程度制限する。DOS

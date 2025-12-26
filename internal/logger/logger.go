@@ -14,7 +14,7 @@ type usecaseLogger interface {
 }絞ったinterface*/
 
 type Logger interface {
-	Debug(ctx context.Context, msg string, attrs ...Attr)
+	Debug(ctx context.Context, msg string, err error, attrs ...Attr)
 	Info(ctx context.Context, msg string, attrs ...Attr)
 	Error(ctx context.Context, msg string, err error, attrs ...Attr)
 }
