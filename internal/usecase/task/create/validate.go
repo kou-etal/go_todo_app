@@ -5,8 +5,6 @@ package create
 import (
 	"errors"
 	"strings"
-
-	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 )
 
 var (
@@ -39,7 +37,6 @@ func normalize(cmd Command) (Command, error) {
 	}
 
 	//UTCとtruncateの責務はdomain。http入力、resultは選択肢
-
 	if !isValidDueOption(cmd.DueDate) {
 		return Command{}, ErrInvalidDueOption
 	}
@@ -51,14 +48,31 @@ func normalize(cmd Command) (Command, error) {
 	}, nil
 
 }
-func isValidDueOption(d dtask.DueOption) bool {
+func isValidDueOption(d int) bool {
 	switch d {
-	case dtask.Due7Days, dtask.Due14Days, dtask.Due21Days, dtask.Due30Days:
+	case 7, 14, 21, 30:
 		return true
 	default:
 		return false
 	}
 }
+
+/*
+func NewDueOption(t int) (dtask.DueOption, error) {
+	switch t {
+	case 7:
+		return dtask.Due7Days, nil
+	case 14:
+		return dtask.Due14Days, nil
+	case 21:
+		return dtask.Due21Days, nil
+	case 30:
+		return dtask.Due30Days, nil
+	default:
+		return 0, ErrInvalidDueOption //これって0で返していいん
+	}
+
+}*/
 
 /*
 関数にしなかった場合何もしないswitch caseを書くことになる。
