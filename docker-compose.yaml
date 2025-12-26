@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  app:
+    image: gotodo
+    build:
+      args:
+        - target=dev
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    ports:
+      - "18000:8080"
+  todo-db:
+    image: mysql:8.0.29
+    platform: linux/amd64
+    container_name: todo-db
+    env_file:
+      - .env
+    volumes:
+      - todo-db-data:/var/lib/mysql
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+    ports:
+      - "33306:3306"
+volumes:
+  todo-db-data:
