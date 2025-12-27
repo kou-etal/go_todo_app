@@ -32,7 +32,7 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		return Result{}, err
 	}
 	now := u.clock.Now()
-	dueoption, err := NewDueOption(cmd.DueDate)
+	dueoption, err := normalizeDueOption(cmd.DueDate)
 	//int->Dueoption。これをhandlerでやってusecaseはdtask.dueoptionにすべきか議論
 	if err != nil {
 		return Result{}, err
@@ -52,7 +52,8 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	return Result{ID: t.ID().Value()}, nil
 }
 
-func NewDueOption(t int) (dtask.DueOption, error) {
+func normalizeDueOption(t int) (dtask.DueOption, error) {
+	//これ大文字にすると共有になるNormalizeDueOption
 	switch t {
 	case 7:
 		return dtask.Due7Days, nil
@@ -64,6 +65,6 @@ func NewDueOption(t int) (dtask.DueOption, error) {
 		return dtask.Due30Days, nil
 	default:
 		return 0, ErrInvalidDueOption //これって0で返していいん
-	}
+	} //これはdomainに置くのはよくない。7,14,21,30っていう外部出力に依存してる。
 
 }
