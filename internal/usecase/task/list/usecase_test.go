@@ -26,6 +26,13 @@ func (s *stubRepo) Store(ctx context.Context, t *dtask.Task) error {
 	return nil //TODO:テスト
 }
 
+func (s *stubRepo) Update(ctx context.Context, t *dtask.Task) error {
+	return nil
+}
+func (s *stubRepo) FindByID(ctx context.Context, id dtask.TaskID) (*dtask.Task, error) {
+	return nil, nil
+}
+
 var _ dtask.TaskRepository = (*stubRepo)(nil)
 
 // テストは相互作用ないならCのテストいらない。一つずつでいい。

@@ -12,6 +12,8 @@ var (
 	ErrEmptyDescription   = errors.New("need description")
 	ErrDescriptionTooLong = errors.New("too long description")
 	ErrInvalidDueOption   = errors.New("invalid due")
+	ErrInvalidID          = errors.New("invalid ID")
+	ErrNotFound           = errors.New("not found")
 )
 
 /*
