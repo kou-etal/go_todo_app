@@ -37,6 +37,11 @@ func (t *Task) ChangeDescription(newDesc TaskDescription, now time.Time) {
 	t.description = newDesc
 	t.touch(now)
 }
+func (t *Task) ChangeDueDate(newDue DueDate, now time.Time) {
+	t.dueDate = newDue
+	t.touch(now)
+} //TODO:遷移ルール定義してもいい
+//過去禁止はfactoryで定義
 
 func (t *Task) ChangeStatus(next TaskStatus, now time.Time) error {
 	//TODO:状態遷移ルールが弱い.canChangeStatusではなくここで定義する。
@@ -61,14 +66,21 @@ func (t *Task) MarkDone(now time.Time) error {
 }
 
 func (t *Task) touch(now time.Time) {
+	n := normalizeTime(now)
+	t.updatedAt = n
+}
+
+func normalizeTime(t time.Time) time.Time {
+	return t.UTC().Truncate(time.Second)
+}
+
+/*func (t *Task) touch(now time.Time) {
 	//TODO:versionの操作はrepo層に任せる
 	n := normalizeTime(now)
 	if n.After(t.updatedAt) {
 		t.updatedAt = n
 		t.version++
 	}
-}
-
-func normalizeTime(t time.Time) time.Time {
-	return t.UTC().Truncate(time.Second)
-}
+}*/
+//これやとフィールドごとにvesion増えておかしい。
+//repoで更新完了したら+にするべき
