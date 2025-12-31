@@ -27,7 +27,7 @@ type ListTasksHandler struct {
 }
 
 // NewListTasksHandlerではない
-func New(uc *list.Usecase, lg logger.Logger) *ListTasksHandler {
+func NewList(uc *list.Usecase, lg logger.Logger) *ListTasksHandler {
 	return &ListTasksHandler{
 		uc:     uc,
 		logger: lg,

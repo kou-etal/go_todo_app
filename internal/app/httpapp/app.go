@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/kou-etal/go_todo_app/internal/clock"
 	"github.com/kou-etal/go_todo_app/internal/config"
 	"github.com/kou-etal/go_todo_app/internal/infra/db"
 	taskrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/task"
@@ -16,7 +17,10 @@ import (
 	taskhandler "github.com/kou-etal/go_todo_app/internal/presentation/http/handler/task"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/middleware"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/router"
+	"github.com/kou-etal/go_todo_app/internal/usecase/task/create"
+	remove "github.com/kou-etal/go_todo_app/internal/usecase/task/delete"
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/list"
+	"github.com/kou-etal/go_todo_app/internal/usecase/task/update"
 )
 
 // Buildは依存を組み立ててhttp.Handlerとcleanupを返す。
@@ -27,7 +31,7 @@ func Build(ctx context.Context) (http.Handler, func(), error) {
 	if err != nil {
 		return nil, func() {}, fmt.Errorf("get config: %w", err)
 	}
-
+	clk := clock.RealClocker{}
 	lg := logger.NewSlog()
 	xdb, closeDB, err := db.NewMySQL(ctx, cfg)
 	if err != nil {
@@ -42,13 +46,22 @@ func Build(ctx context.Context) (http.Handler, func(), error) {
 	//taskrepo.NewRepositoryはqueryer、これはもともとsqlxが満たしているメソッド。
 	//重い抽象ではない軽い抽象
 
-	listUC := list.New(taskRepo)
+	tasklistUC := list.New(taskRepo)
+	taskCreateUC := create.New(taskRepo, clk)
+	taskUpdateUC := update.New(taskRepo, clk)
+	taskDeleteUC := remove.New(taskRepo)
 
-	taskListHandler := taskhandler.New(listUC, lg)
+	taskListHandler := taskhandler.NewList(tasklistUC, lg)
+	taskCreateHandler := taskhandler.NewCreate(taskCreateUC, lg)
+	taskUpdateHandler := taskhandler.NewUpdate(taskUpdateUC, lg)
+	taskDeleteHandler := taskhandler.NewDelete(taskDeleteUC, lg)
 
 	h := router.New(router.Deps{
 		Task: router.TaskDeps{
-			List: taskListHandler,
+			List:   taskListHandler,
+			Create: taskCreateHandler,
+			Update: taskUpdateHandler,
+			Delete: taskDeleteHandler,
 		},
 	})
 

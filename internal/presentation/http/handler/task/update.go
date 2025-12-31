@@ -134,7 +134,7 @@ func (h *UpdateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type updateRequest struct {
 	Version     uint64  `json:"version"`
-	Title       *string `json:"title,omitempty"`
+	Title       *string `json:"title,omitempty"` //0とnilを分離
 	Description *string `json:"description,omitempty"`
 	DueDate     *int    `json:"due_date,omitempty"` //jsonはjs onlyでもない限りsnake_case
 }

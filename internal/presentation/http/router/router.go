@@ -13,7 +13,10 @@ type Deps struct {
 }
 
 type TaskDeps struct {
-	List http.Handler
+	List   http.Handler
+	Create http.Handler
+	Update http.Handler
+	Delete http.Handler
 }
 
 // http.Handlerはinterface
