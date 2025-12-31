@@ -1,8 +1,6 @@
 package task
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
 )
 
@@ -16,7 +14,7 @@ func NewTaskID() TaskID {
 func ParseTaskID(v string) (TaskID, error) {
 	_, err := uuid.Parse(v)
 	if err != nil {
-		return "", errors.New("tmp")
+		return "", ErrInvalidID
 	}
 	return TaskID(v), nil
 }

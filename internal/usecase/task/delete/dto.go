@@ -5,6 +5,4 @@ type Command struct {
 	Version uint64
 }
 
-type Result struct {
-	ID string
-} //TODO:versionも返すべき
+//deleteはresult使わない
