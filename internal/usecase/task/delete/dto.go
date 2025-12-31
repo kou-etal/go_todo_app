@@ -1,4 +1,4 @@
-package delete
+package remove
 
 type Command struct {
 	ID      string

@@ -1,5 +1,7 @@
-package delete
+package remove
 
+//package名 deleteはbuilt inと衝突。
+//そもそも createとか動詞パッケージ名に使うのあまり良くない
 import (
 	"context"
 
