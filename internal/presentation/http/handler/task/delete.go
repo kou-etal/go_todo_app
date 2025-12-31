@@ -9,18 +9,18 @@ import (
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/logger"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/responder"
-	"github.com/kou-etal/go_todo_app/internal/usecase/task/delete"
+	remove "github.com/kou-etal/go_todo_app/internal/usecase/task/delete"
 )
 
 // versionをheaderかbodyどっちに含ませるか議論
 // If-Match(headerに含ませる)方がhttp的に正しい
 // 今回はbodyに含ませる設計
 type DeleteTaskHandler struct {
-	uc     *delete.Usecase
+	uc     *remove.Usecase
 	logger logger.Logger
 }
 
-func NewDelete(uc *delete.Usecase, lg logger.Logger) *DeleteTaskHandler {
+func NewDelete(uc *remove.Usecase, lg logger.Logger) *DeleteTaskHandler {
 	return &DeleteTaskHandler{
 		uc:     uc,
 		logger: lg,
@@ -57,14 +57,14 @@ func (h *DeleteTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := delete.Command{
+	cmd := remove.Command{
 		ID:      id,
 		Version: req.Version,
 	} //usecaseエラー
 	if err := h.uc.Do(ctx, cmd); err != nil {
 		switch {
-		case errors.Is(err, delete.ErrInvalidID),
-			errors.Is(err, delete.ErrInvalidVersion):
+		case errors.Is(err, remove.ErrInvalidID),
+			errors.Is(err, remove.ErrInvalidVersion):
 			h.logger.Debug(ctx, "invalid command", nil)
 			//TODO:ここはdebugエラー返さずにfieldとreason返す
 			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
