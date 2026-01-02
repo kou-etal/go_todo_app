@@ -27,15 +27,17 @@ func New(deps Deps) http.Handler {
 	// health
 	mux.Handle("/health", http.HandlerFunc(healthHandler))
 
-	// tasks
-	mux.Handle("/tasks", deps.Task.List)
+	//tasksHandlerはList返すだけではなくservehttp実行まで行う。実行がtasksHandlerに使われるから。
+	//mux.Handle("/tasks", deps.Task.List))は可能やけどそれは実行がdeps.Task.Listに使われるから。
+
+	//RESTに従うためにパスではなくメソッドで分岐
+	/*両方を分岐させるtasksHandlerを作った場合GET /task/123とかがはじけない。それを弾こうと思うとurlをrouterで取得することになるが
+	今の設計ではurl取得をhandlerに寄せてるから不適*/
+	//collection
+	mux.Handle("/tasks", tasksHandler(deps.Task))
+	//item
+	mux.Handle("/tasks/", taskHandler(deps.Task))
 	//h := middleware.RequestID(mux)  middlewareのチェーンはここでやると汚い
 
 	return mux
-}
-
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }
