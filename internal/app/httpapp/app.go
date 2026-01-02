@@ -64,7 +64,7 @@ func Build(ctx context.Context) (http.Handler, func(), error) {
 			Delete: taskDeleteHandler,
 		},
 	})
-
+	//middlewareのチェーンはrouter/middlewareに託してもいい
 	h = middleware.RequestID(h)
 	// h = middleware.Recover(lg)(h)
 	h = middleware.AccessLog(lg)(h)
