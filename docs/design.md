@@ -81,5 +81,5 @@ DDDを採用
 *ここにinterfaceをどに置くか後ほど詳しく記述する*
 
 
-TODO:トランザクション、metrics、perf、公開API、
+TODO:トランザクション、metrics、perf(大規模)、grpc、厚いビジネスロジック
 middlewareは例えばuseridを与えたいってなった時にctxを通す
