@@ -23,6 +23,8 @@ func NewTask(
 		version:     1,
 	}
 }
+
+// これは復元用。repoで使う
 func ReconstructTask(
 	id TaskID,
 	title TaskTitle,

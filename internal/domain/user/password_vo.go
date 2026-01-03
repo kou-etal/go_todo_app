@@ -25,6 +25,8 @@ func NewUserPasswordFromPlain(
 	if strings.TrimSpace(plain) == "" {
 		return UserPassword{}, ErrEmptyPassword
 	}
+	//passwordではスペースは丸めるではなく、そもそも弾く
+	//descriptionとかはスペース丸めてる。
 	if plain != strings.TrimSpace(plain) {
 		return UserPassword{}, ErrPasswordHasLeadingOrTrailingSpace
 	}

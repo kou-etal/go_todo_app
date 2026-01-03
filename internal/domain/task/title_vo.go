@@ -5,6 +5,11 @@ import (
 	"unicode/utf8"
 )
 
+// そもそもなんでstructにしてる。
+// type TaskTitle stringの場合別パッケージからvar t TaskTitle = "x"が可能、newtasktitleを通らない不正な値が発生。
+// structの場合var t TaskTitle = "x"、TaskTitle{valuse:x}が別パッケージから不可能。
+// さらにstructの場合フィールド変更も簡単、メソッドもはやせる。
+// idは単なる識別子やからtypeでいい
 type TaskTitle struct {
 	value string
 }

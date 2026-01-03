@@ -8,5 +8,6 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmoiron/sqlx v1.4.0 // indirect
+	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 )
