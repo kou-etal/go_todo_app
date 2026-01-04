@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -45,6 +46,14 @@ func NewUserPasswordFromPlain(
 		return UserPassword{}, err
 	}
 
+	return UserPassword{hash: hash}, nil
+}
+
+// これrepoから使う。passwordでは普通はusecase->domain repo->domainを再利用するところを分けて実装する。
+func ReconstructUserPassword(hash string) (UserPassword, error) {
+	if hash == "" {
+		return UserPassword{}, errors.New("password hash is empty")
+	}
 	return UserPassword{hash: hash}, nil
 }
 
