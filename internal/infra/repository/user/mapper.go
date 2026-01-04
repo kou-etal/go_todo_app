@@ -54,10 +54,13 @@ func toEntity(r UserRecord) (*duser.User, error) {
 	), nil
 }
 
+//これもuserrrecordをポインタやめる。
+//u *duser.Userこれはルール持ってるからポインタ
 // これ別に関数公開する必要ないからEntityToRecordではなく
-func toRecord(u duser.User) *UserRecord {
 
-	return &UserRecord{
+func toRecord(u *duser.User) UserRecord {
+
+	return UserRecord{
 		ID: u.ID().Value(),
 		//Email:       string(u.Email().Value()),これstringは保険にしてもいらん
 		Email:           u.Email().Value(),
