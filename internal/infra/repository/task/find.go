@@ -24,7 +24,7 @@ LIMIT 1
 	if err := r.q.GetContext(ctx, &rec, q, id.Value()); err != nil {
 		if isNotFound(err) {
 			return nil, dtask.ErrNotFound
-		} //norowsを吸収
+		} //norowsを吸収、定義されたエラーだけ吸収、そうでなければwrap
 		return nil, fmt.Errorf("taskrepo findbyid: %w", err)
 	}
 
