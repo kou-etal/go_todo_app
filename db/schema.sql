@@ -35,3 +35,21 @@ CREATE TABLE `task`
     KEY `idx_task_due_sort` (`due_is_null`, `due_date`, `id`)
 ) Engine=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='タスク';
 --duedate not nullやのに仕様変更のためにdue_is_nullっていう主張は不可
+CREATE TABLE `email_verification_tokens` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'トークン行の識別子',
+  `user_id` CHAR(36) NOT NULL COMMENT '対象ユーザーID(UUID)',
+  `token_hash` CHAR(64) NOT NULL COMMENT 'SHA-256(token) を hex 化したもの',
+  `expires_at` DATETIME(6) NOT NULL COMMENT '有効期限',
+  `used_at` DATETIME(6) NULL COMMENT '使用日時(未使用ならNULL)',
+  `created_at` DATETIME(6) NOT NULL COMMENT '作成日時',
+
+  PRIMARY KEY (`id`),
+
+  UNIQUE KEY `uix_token_hash` (`token_hash`) USING BTREE,
+  KEY `idx_user_id_created_at` (`user_id`, `created_at`) USING BTREE,
+  KEY `idx_expires_at` (`expires_at`) USING BTREE,
+
+  CONSTRAINT `fk_email_verification_tokens_user_id`
+    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='メール認証トークン';
