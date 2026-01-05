@@ -17,13 +17,16 @@ var _ user.PasswordHasher = (*BcryptHasher)(nil)
 
 // costを受け取る。
 func NewBcryptHasher(cost int) *BcryptHasher {
+	//これcostバリデーションしたほうがいい。NewBcryptHasher(-1)が通る。
 	return &BcryptHasher{cost: cost}
 }
 
 // plain->hash
+// 適当にポインタレシーバにしがち
 func (h *BcryptHasher) Hash(plain string) (string, error) {
 	//[]byte(plain) バイト文字列で受け取る。
 	b, err := bcrypt.GenerateFromPassword([]byte(plain), h.cost)
+	//これ返り値ASCII文字列やからstring可能
 	if err != nil {
 		return "", err
 	}
@@ -34,6 +37,7 @@ func (h *BcryptHasher) Hash(plain string) (string, error) {
 
 // ログイン用の比較メソッド
 func (h *BcryptHasher) Compare(hash, plain string) error {
+	//これなんでerr返さない。
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(plain))
 	//わざわざtrueとかで返さないのがGolang
 }
