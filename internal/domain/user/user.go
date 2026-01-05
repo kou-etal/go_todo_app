@@ -8,7 +8,7 @@ type User struct {
 	//すべて必須。そうでない場合userName *UserName
 	id              UserID
 	email           UserEmail
-	password        UserPassword
+	passwordHash    UserPassword //ここではすでにhashやからpasswordよりpasswordHashのほうがいい
 	userName        UserName
 	emailVerifiedAt *time.Time
 	createdAt       time.Time
@@ -18,7 +18,7 @@ type User struct {
 
 func (t *User) ID() UserID                  { return t.id }
 func (t *User) Email() UserEmail            { return t.email }
-func (t *User) Password() UserPassword      { return t.password }
+func (t *User) Password() UserPassword      { return t.passwordHash }
 func (t *User) UserName() UserName          { return t.userName }
 func (t *User) EmailVerifiedAt() *time.Time { return t.emailVerifiedAt }
 func (t *User) CreatedAt() time.Time        { return t.createdAt }
@@ -32,7 +32,7 @@ func (t *User) ChangeEmail(newEmail UserEmail, now time.Time) {
 	t.updateTime(now)
 }
 func (t *User) ChangePassword(newPass UserPassword, now time.Time) {
-	t.password = newPass
+	t.passwordHash = newPass
 	t.updateTime(now)
 }
 func (t *User) ChangeUserName(newName UserName, now time.Time) {

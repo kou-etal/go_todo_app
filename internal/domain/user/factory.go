@@ -15,7 +15,7 @@ func NewUser(
 	return &User{
 		id:              NewUserID(), //IDが欲しいのはdomain層の都合
 		email:           email,
-		password:        password,
+		passwordHash:    password,
 		userName:        userName,
 		emailVerifiedAt: nil, //ここを変えれるのはverifyemailメソッドだけ。これを適当に変えさせないためにカプセル
 		createdAt:       n,
@@ -39,7 +39,7 @@ func ReconstructUser(
 	return &User{
 		id:              id,
 		email:           email,
-		password:        password,
+		passwordHash:    password,
 		emailVerifiedAt: emailVerifiedAt,
 		userName:        userName,
 		createdAt:       createdAt,
