@@ -36,7 +36,7 @@ CREATE TABLE `task`
 ) Engine=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='タスク';
 --duedate not nullやのに仕様変更のためにdue_is_nullっていう主張は不可
 CREATE TABLE `email_verification_tokens` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'トークン行の識別子',
+  `id`CHAR(36) NOT NULL AUTO_INCREMENT COMMENT 'トークン行の識別子',
   `user_id` CHAR(36) NOT NULL COMMENT '対象ユーザーID(UUID)',
   `token_hash` CHAR(64) NOT NULL COMMENT 'SHA-256(token) を hex 化したもの',
   `expires_at` DATETIME(6) NOT NULL COMMENT '有効期限',
