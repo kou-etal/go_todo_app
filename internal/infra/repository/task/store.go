@@ -55,6 +55,8 @@ WHERE
 		"next_version": rec.Version + 1,
 	}
 	//帰納的に+1を圧合うためのparams。+1の責務をdomainに寄せるならばrecをsqlに直接代入可能
+	//いや違うわ。別にnext_versionにする意味ないか。普通にversion+1でもいいけど今回は全データsetで見た目整ってるからparam作ってる。
+	//TODO:でもコードだるくなるし+1のほうがいいか
 	//+1の責務をここで持ってることによりdomain側のversionは更新されない。ゆえに今の設計やと更新した後にリロード必須。
 
 	res, err := r.q.NamedExecContext(ctx, q, params)

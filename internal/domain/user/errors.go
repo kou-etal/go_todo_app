@@ -13,4 +13,5 @@ var (
 	ErrPasswordHasLeadingOrTrailingSpace = errors.New("password has leading or trailing whitespace")
 	ErrEmptyName                         = errors.New("name is empty")
 	ErrNameTooLong                       = errors.New("name is too long")
+	ErrConflict                          = errors.New("userrepo: conflict")
 )
