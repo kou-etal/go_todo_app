@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+// aggregate:=単体でフィールド変えられたくない。ルールの強さ。ルールを破られると壊れる。テーブル単位で考える。
+// TaskはstatusやdueDateに遷移ルールあり、ゆえにaggregate
+// ゆえに勝手にどこからでもフィールド変えられたくないから更新系をChangeでレシーバにする。
+// userprofileとかは別に強いルールない。aggregateじゃないこと多い。
+// 何でもかんでもaggregateにしてchangeメソッド作ると良くない。
 type Task struct {
 	id          TaskID //学習用メモ　ここでDBとのマッピング定義するとdomainにDB都合入って良くない。
 	title       TaskTitle
@@ -31,15 +36,15 @@ func (t *Task) Version() uint64              { return t.version }
 
 func (t *Task) ChangeTitle(newTitle TaskTitle, now time.Time) {
 	t.title = newTitle
-	t.touch(now)
+	t.updateTime(now)
 }
 func (t *Task) ChangeDescription(newDesc TaskDescription, now time.Time) {
 	t.description = newDesc
-	t.touch(now)
+	t.updateTime(now)
 }
 func (t *Task) ChangeDueDate(newDue DueDate, now time.Time) {
 	t.dueDate = newDue
-	t.touch(now)
+	t.updateTime(now)
 } //TODO:遷移ルール定義してもいい
 //過去禁止はfactoryで定義
 
@@ -50,14 +55,14 @@ func (t *Task) ChangeStatus(next TaskStatus, now time.Time) error {
 	}
 
 	t.status = next
-	t.touch(now)
+	t.updateTime(now)
 	return nil
 }
 
 func (t *Task) Reschedule(newDue DueDate, now time.Time) {
 	//TODO:これも状態遷移系。
 	t.dueDate = newDue
-	t.touch(now)
+	t.updateTime(now)
 }
 
 // MarkDoneに意味を持たせるならばchangestatusと分離
@@ -65,7 +70,7 @@ func (t *Task) MarkDone(now time.Time) error {
 	return t.ChangeStatus(StatusDone, now)
 }
 
-func (t *Task) touch(now time.Time) {
+func (t *Task) updateTime(now time.Time) {
 	n := normalizeTime(now)
 	t.updatedAt = n
 }
@@ -74,7 +79,7 @@ func normalizeTime(t time.Time) time.Time {
 	return t.UTC().Truncate(time.Second)
 }
 
-/*func (t *Task) touch(now time.Time) {
+/*func (t *Task) updateTime(now time.Time) {
 	//TODO:versionの操作はrepo層に任せる
 	n := normalizeTime(now)
 	if n.After(t.updatedAt) {

@@ -82,6 +82,7 @@ func (h *UpdateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res, err := h.uc.Do(ctx, cmd)
 	if err != nil {
 		switch {
+		//TODO:エラー設計雑すぎ、そもそもhandlerがdomainのエラー扱わない。usecaseで吸収する。
 		case errors.Is(err, update.ErrInvalidID),
 			errors.Is(err, update.ErrInvalidVersion),
 			errors.Is(err, update.ErrNoFieldsToUpdate),

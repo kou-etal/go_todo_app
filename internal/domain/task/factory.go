@@ -23,6 +23,8 @@ func NewTask(
 		version:     1,
 	}
 }
+
+// これは復元用。repoで使う
 func ReconstructTask(
 	id TaskID,
 	title TaskTitle,
@@ -46,7 +48,9 @@ func ReconstructTask(
 }
 
 const maxDueDays = 30 //気遣い
-
+// これは相対、newのロジック->factoryに置く
+// ただの相対の状態遷移ロジックはentityに置く
+// 相対ではないnewのロジック
 func NewDueDateFromOption(now time.Time, opt DueOption) (DueDate, error) {
 	now = normalizeTime(now) //factory側で秒
 

@@ -1,5 +1,6 @@
 package task
 
+//TODO:これはUI都合のルール、ゆえにここで宣言不可。usecaseで宣言し、parseをそこで作ってfactoryのnewにはintを与える
 type DueOption int
 
 const (

@@ -30,6 +30,12 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid task record id=%s field=dueDate: %w", r.ID, err)
 	}
+	/*ReconstructTaskを作らなければtask := &Task{
+	      id: id,
+	      title: title,
+	      ...
+	  	となりrepoがdomainに関与しすぎる
+	*/
 
 	return dtask.ReconstructTask(
 		id,

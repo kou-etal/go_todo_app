@@ -26,6 +26,7 @@ type ListQuery struct {
 	Cursor *ListCursor
 }
 
+// ここは永続の抽象
 type TaskRepository interface {
 	List(ctx context.Context, q ListQuery) ([]*Task, *ListCursor, error)
 	Store(ctx context.Context, t *Task) error
