@@ -1,9 +1,5 @@
 package register
 
-//withintxはusecaseで使わずにappで作るのが良い。txをusecaseで作ると厚くなる。
-//それに伴ってそもそもtxrunnerをstructのフィールドに入れない。usecase実装からtxを排除
-//それしたらusecaseがいつも通りになって見やすいな。
-
 import (
 	"context"
 
@@ -72,8 +68,6 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		return Result{}, err
 	}
 
-	var res Result
-
 	err = u.tx.WithinTx(ctx, func(ctx context.Context, deps usetx.RegisterDeps) error {
 		if err := deps.UserRepo().Store(ctx, user); err != nil {
 			return err
@@ -83,14 +77,14 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		}
 
 		_ = plain //TODO:mailer
-		res = Result{UserID: user.ID().Value()}
+
 		return nil
 	})
 	if err != nil {
 		return Result{}, err
 	}
 
-	return res, nil
+	return Result{UserID: user.ID().Value()}, nil
 }
 
 //whithintxはappで組み立てるから使わなくなったコード
@@ -103,3 +97,9 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	}
 	return nil
 })*/
+
+//withintxはusecaseで使わずにappで作るのが良い。
+// txをusecaseで作ると厚くなる。
+//それに伴ってそもそもtxrunnerをstructのフィールドに入れない。usecase実装からtxを排除
+//それしたらusecaseがいつも通りになって見やすいな。
+//これ全部嘘。tx作っても別に厚くならない。適切な責務

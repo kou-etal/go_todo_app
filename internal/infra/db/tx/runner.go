@@ -21,7 +21,7 @@ import (
 これは意味ない。
 */
 
-type DepsFactory func(q db.QueryerExecer) usetx.Deps
+type RegisterDepsFactory func(q db.QueryerExecer) usetx.RegisterDeps
 
 //これdb.QueryerExecerを引数に持ってるからこれが引数強制してる
 //解決策:deps作成をinfraで行う。でもそれしたらinfra責務大きくなる
@@ -32,12 +32,12 @@ type DepsFactory func(q db.QueryerExecer) usetx.Deps
 type SQLxRunner struct {
 	beginner   db.Beginner
 	opts       *sql.TxOptions
-	makeTxDeps DepsFactory
+	makeTxDeps RegisterDepsFactory
 }
 
 var _ usetx.Runner = (*SQLxRunner)(nil)
 
-func New(beginner db.Beginner, opts *sql.TxOptions, makeTxDeps DepsFactory) *SQLxRunner {
+func New(beginner db.Beginner, opts *sql.TxOptions, makeTxDeps RegisterDepsFactory) *SQLxRunner {
 	return &SQLxRunner{
 		beginner:   beginner,
 		opts:       opts,
@@ -47,7 +47,7 @@ func New(beginner db.Beginner, opts *sql.TxOptions, makeTxDeps DepsFactory) *SQL
 
 func (r *SQLxRunner) WithinTx(
 	ctx context.Context,
-	fn func(ctx context.Context, deps usetx.Deps) error,
+	fn func(ctx context.Context, deps usetx.RegisterDeps) error,
 ) (retErr error) {
 	//deferで追記するから名前付き戻り値
 	tx, err := r.beginner.BeginTxx(ctx, r.opts) //tx作成

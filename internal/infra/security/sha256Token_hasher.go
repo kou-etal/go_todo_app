@@ -11,6 +11,7 @@ import (
 // tokenはSHA256使う。DB検索可能。
 type SHA256TokenHasher struct{}
 
+// state持たないからnew作らない
 var _ dverify.TokenHasher = (*SHA256TokenHasher)(nil)
 
 // plain->hash

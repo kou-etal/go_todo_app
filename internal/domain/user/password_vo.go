@@ -18,6 +18,7 @@ type PasswordHasher interface {
 
 // 変換+normalization
 // domainではplainではなくhashを扱う。
+// tokenの場合ユーザー入力ないからhashはdomain都合。passwordの場合ユーザー入力あるからhashはusecase都合。
 func NewUserPasswordFromPlain(
 	plain string,
 	hasher PasswordHasher,
