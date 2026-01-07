@@ -63,6 +63,7 @@ func (h *DeleteTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} //usecaseエラー
 	if err := h.uc.Do(ctx, cmd); err != nil {
 		switch {
+		//TODO:エラー設計雑すぎ、そもそもhandlerがdomainのエラー扱わない。usecaseで吸収する。
 		case errors.Is(err, remove.ErrInvalidID),
 			errors.Is(err, remove.ErrInvalidVersion):
 			h.logger.Debug(ctx, "invalid command", nil)

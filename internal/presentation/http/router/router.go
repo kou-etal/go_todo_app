@@ -10,6 +10,7 @@ import (
 
 type Deps struct {
 	Task TaskDeps
+	User UserDeps
 }
 
 type TaskDeps struct {
@@ -17,6 +18,9 @@ type TaskDeps struct {
 	Create http.Handler
 	Update http.Handler
 	Delete http.Handler
+}
+type UserDeps struct {
+	Register http.Handler
 }
 
 // http.Handlerはinterface
