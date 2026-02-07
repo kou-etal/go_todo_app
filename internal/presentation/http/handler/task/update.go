@@ -12,19 +12,19 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/update"
 )
 
-type UpdateTaskHandler struct {
+type updateHandler struct {
 	uc     *update.Usecase
 	logger logger.Logger
 }
 
-func NewUpdate(uc *update.Usecase, lg logger.Logger) *UpdateTaskHandler {
-	return &UpdateTaskHandler{
+func NewUpdate(uc *update.Usecase, lg logger.Logger) *updateHandler {
+	return &updateHandler{
 		uc:     uc,
 		logger: lg,
 	}
 }
 
-func (h *UpdateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := r.PathValue("id")
 	if id == "" {

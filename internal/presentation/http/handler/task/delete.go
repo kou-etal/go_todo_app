@@ -17,18 +17,18 @@ import (
 // versionをheaderかbodyどっちに含ませるか議論
 // If-Match(headerに含ませる)方がhttp的に正しい
 // 今回はbodyに含ませる設計
-type DeleteTaskHandler struct {
+type deleteHandler struct {
 	uc     *remove.Usecase
 	logger logger.Logger
 }
 
-func NewDelete(uc *remove.Usecase, lg logger.Logger) *DeleteTaskHandler {
-	return &DeleteTaskHandler{
+func NewDelete(uc *remove.Usecase, lg logger.Logger) *deleteHandler {
+	return &deleteHandler{
 		uc:     uc,
 		logger: lg,
 	}
 }
-func (h *DeleteTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *deleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := r.PathValue("id")
 	if id == "" {

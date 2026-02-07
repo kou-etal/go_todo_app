@@ -12,18 +12,18 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/create"
 )
 
-type CreateTaskHandler struct {
+type createHandler struct {
 	uc     *create.Usecase
 	logger logger.Logger
 }
 
-func NewCreate(uc *create.Usecase, lg logger.Logger) *CreateTaskHandler {
-	return &CreateTaskHandler{
+func NewCreate(uc *create.Usecase, lg logger.Logger) *createHandler {
+	return &createHandler{
 		uc:     uc,
 		logger: lg,
 	}
 }
-func (h *CreateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req createRequest

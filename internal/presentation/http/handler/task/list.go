@@ -21,20 +21,24 @@ type ListTasksHandler struct {
 	uc ListTasksUsecase
 }*/
 // internal/presentation/http/handler/task/list.go
-type ListTasksHandler struct {
+
+// type ListTasksHandler struct { これtaskは繰り返しになる
+// これhandlerのstructはexportしないから大文字じゃなくていい
+// usecaseは今の設計の場合interfaceおいてないから具体依存。ゆえにstruct大文字でexport
+type listHandler struct {
 	uc     *list.Usecase
 	logger logger.Logger
 }
 
 // NewListTasksHandlerではない
-func NewList(uc *list.Usecase, lg logger.Logger) *ListTasksHandler {
-	return &ListTasksHandler{
+func NewList(uc *list.Usecase, lg logger.Logger) *listHandler {
+	return &listHandler{
 		uc:     uc,
 		logger: lg,
 	}
 }
 
-func (h *ListTasksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *listHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	qp := r.URL.Query()
 

@@ -8,7 +8,7 @@ import (
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 )
 
-func (r *Repository) List(ctx context.Context, q dtask.ListQuery) ([]*dtask.Task, *dtask.ListCursor, error) {
+func (r *repository) List(ctx context.Context, q dtask.ListQuery) ([]*dtask.Task, *dtask.ListCursor, error) {
 	//usecaseで決めてもいいが、repoでも最低限守る
 	//limitはこっちで決めてクライアントに決めさせないほうがいいらしい
 	if q.Limit <= 0 {
