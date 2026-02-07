@@ -23,6 +23,9 @@ type Task struct {
 
 type Tasks []*Task
 
+//スライスは参照やからTasks[0].ID、今回の場合Tasks[0].ChangeStatusとかは普通にコピーじゃなくても元も変わる。
+//でもrangeでコピーしたりappendした場合は[]Taskやとコピーになっても元が変わらない。
+//ゆえに[]*Taskを使う
 //TODO:Tasksを定義するならば定義に意味を持たせるようなメソッドをタスクに持たせる。ただ短いからTasksは微妙。
 
 func (t *Task) ID() TaskID                   { return t.id }
@@ -75,6 +78,8 @@ func (t *Task) updateTime(now time.Time) {
 	t.updatedAt = n
 }
 
+// ここでnormalizeTime定義するならばこれがDB都合ではなくドメインルールである理由が必要そうでないならrepo層でnormalize
+// TODO:そう考えるとdomainでnormalizeする意味ってないな
 func normalizeTime(t time.Time) time.Time {
 	return t.UTC().Truncate(time.Second)
 }

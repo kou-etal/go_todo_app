@@ -18,7 +18,7 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/infra/security"
 
 	"github.com/kou-etal/go_todo_app/internal/logger"
-	taskhandler "github.com/kou-etal/go_todo_app/internal/presentation/http/handler/task"
+	"github.com/kou-etal/go_todo_app/internal/presentation/http/handler/task"
 	userhandler "github.com/kou-etal/go_todo_app/internal/presentation/http/handler/user"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/middleware"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/router"
@@ -49,20 +49,25 @@ func Build(ctx context.Context) (http.Handler, func(), error) {
 		closeDB()
 	}
 
-	taskRepo := taskrepo.NewRepository(xdb)
+	/*ここのの命名は怪しい
+	まず繰り返しをしない、長い名前を避けるは大事
+	taskとrepoはpackage taskにしてrepoをエイリアス、usecaseは行動単位をパッケージにする
+	handlerを省略すべきか
+	*/
+	taskRepo := taskrepo.New(xdb)
 
 	//taskrepo.NewRepositoryはqueryer、これはもともとsqlxが満たしているメソッド。
 	//重い抽象ではない軽い抽象
 
-	tasklistUC := list.New(taskRepo)
+	taskListUC := list.New(taskRepo)
 	taskCreateUC := create.New(taskRepo, clk)
 	taskUpdateUC := update.New(taskRepo, clk)
 	taskDeleteUC := remove.New(taskRepo)
 
-	taskListHandler := taskhandler.NewList(tasklistUC, lg)
-	taskCreateHandler := taskhandler.NewCreate(taskCreateUC, lg)
-	taskUpdateHandler := taskhandler.NewUpdate(taskUpdateUC, lg)
-	taskDeleteHandler := taskhandler.NewDelete(taskDeleteUC, lg)
+	taskListHandler := task.NewList(taskListUC, lg)
+	taskCreateHandler := task.NewCreate(taskCreateUC, lg)
+	taskUpdateHandler := task.NewUpdate(taskUpdateUC, lg)
+	taskDeleteHandler := task.NewDelete(taskDeleteUC, lg)
 	//user系
 	var makeTxDeps txrunner.RegisterDepsFactory = func(q db.QueryerExecer) usetx.RegisterDeps {
 		u := userrepo.NewRepository(q)
@@ -106,3 +111,7 @@ func Build(ctx context.Context) (http.Handler, func(), error) {
 
 	return h, cleanup, nil
 }
+
+//repoは永続単位->taskに対する永続はすべてtaskrepo
+//ucはユーザーの行動単位->taskに対するユーザーの操作のそれぞれは分けるべき->ファイル分け
+//handlerはリソースの識別単位->ファイル分け

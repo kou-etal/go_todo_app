@@ -15,7 +15,7 @@ type Repository struct {
 
 var _ dtask.TaskRepository = (*Repository)(nil)
 
-func NewRepository(db db.QueryerExecer) *Repository {
+func New(db db.QueryerExecer) *Repository {
 	return &Repository{
 		q: db,
 	}

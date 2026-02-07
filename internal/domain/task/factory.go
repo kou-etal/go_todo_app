@@ -9,7 +9,7 @@ func NewTask(
 	description TaskDescription,
 	dueDate DueDate,
 	now time.Time,
-) *Task {
+) *Task { //Entityはコピーされない。ポインタで返す
 	n := normalizeTime(now)
 
 	return &Task{

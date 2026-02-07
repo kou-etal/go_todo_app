@@ -1,4 +1,4 @@
-package taskhandler
+package task
 
 import (
 	"encoding/json"

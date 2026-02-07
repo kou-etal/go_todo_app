@@ -1,4 +1,6 @@
-package taskhandler
+package task
+
+//package taskhandlerこれはhandler二重
 
 import (
 	"encoding/json"

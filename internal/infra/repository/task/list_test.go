@@ -101,7 +101,7 @@ func TestRepository_List_defaultLimitAndSort(t *testing.T) {
 	t.Parallel()
 
 	qe := &stubQueryerExecer{}
-	repo := NewRepository(qe)
+	repo := New(qe)
 
 	_, _, err := repo.List(context.Background(), dtask.ListQuery{
 		Limit:  50,
@@ -130,7 +130,7 @@ func TestRepository_List_createdCursor_buildsWhereAndArgs(t *testing.T) {
 	t.Parallel()
 
 	qe := &stubQueryerExecer{}
-	repo := NewRepository(qe)
+	repo := New(qe)
 
 	cur := &dtask.ListCursor{
 		Created: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
@@ -189,7 +189,7 @@ func TestRepository_List_hasNext_trimsAndReturnsNextCursor(t *testing.T) {
 			mustRecord("id-1", created3, time.Time{}),
 		},
 	}
-	repo := NewRepository(qr)
+	repo := New(qr)
 
 	tasks, next, err := repo.List(context.Background(), dtask.ListQuery{
 		Limit:  2,
