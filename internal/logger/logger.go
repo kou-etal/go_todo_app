@@ -4,6 +4,7 @@ import (
 	"context"
 )
 
+//ここはlogger境界
 /* slog /zap/zerologを差し替えるためにinterface
 interfaceは使う側で定義しろってのは使う側が必要なメソッドだけ用意してむだにinterface作るなって意味。
 これは横断的やからここにおいていい。
@@ -20,6 +21,7 @@ type Logger interface {
 }
 
 // slog.Attrとかを消すためにAttr
+// つまり具体じゃなくなる
 type Attr struct {
 	Key   string
 	Value any

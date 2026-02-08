@@ -8,6 +8,9 @@ import (
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 )
 
+// []*dtask.Taskはentity制約でポインタ
+// *dtask.ListCursorはnil使えるからポインタ
+// dtask.ListQueryは入力をnormalzeしてるけど値受けにすることで元を汚さない
 func (r *repository) List(ctx context.Context, q dtask.ListQuery) ([]*dtask.Task, *dtask.ListCursor, error) {
 	//usecaseで決めてもいいが、repoでも最低限守る
 	//limitはこっちで決めてクライアントに決めさせないほうがいいらしい
@@ -92,6 +95,10 @@ FROM task
 	}
 
 	tasks := make([]*dtask.Task, 0, len(records))
+	/*
+		いつもはtasks := make([]*dtask.Task, len(records))やけど今回はappend
+		[nil,nil,nil,records[i]]になる。ゆえに0から始めて容量を制限する
+	*/
 	for i := range records {
 		rec := &records[i]
 		t, err := RecordToEntity(rec)
@@ -99,6 +106,7 @@ FROM task
 			return nil, nil, fmt.Errorf("invalid task record id=%s: %w", rec.ID, err)
 		}
 		tasks = append(tasks, t)
+		//recordは値、selectcontextはポインタ、taskに代入もポインタはスタンダード
 	}
 	if !hasNext {
 		return tasks, nil, nil

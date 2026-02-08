@@ -3,6 +3,11 @@ package requestid
 import "context"
 
 // ctxKeyRequestID は衝突を避けるため。string、type ctxKeyRequestID stringは不可
+//もっと詳しく。まずはstringは普通に衝突する
+//type Mykey stringは別パッケージからも作れる
+//type mykey stringは安全やけどmykey("request_id")のrequest_id部分に意味があるように思える。mykey("trace_id")とかで使ってしまう可能性
+//type ctxKeyRequestID struct{}は衝突しにくい。明確にrequest_id用途だけ。
+//keyはstruct
 type ctxKeyRequestID struct{}
 
 var requestIDKey = ctxKeyRequestID{}
@@ -18,7 +23,9 @@ func FromContext(ctx context.Context) (string, bool) {
 }
 
 // WithContext は request_id を context に埋め込むための helper。
-// 重要：context key の所有権をこのパッケージに寄せるため、middleware 側で WithValue 直呼びしない。
+//context key の所有権をこのパッケージに寄せるため、middleware 側で WithValue 直呼びしない。
 func WithContext(ctx context.Context, rid string) context.Context {
 	return context.WithValue(ctx, requestIDKey, rid)
 }
+
+//log、metrics、traceで観測。accesslogは観測ではあるけど別。

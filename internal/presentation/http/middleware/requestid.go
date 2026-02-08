@@ -7,23 +7,29 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
 )
 
-// 取得をここに定義したくないからwithvalueの埋め込みと取得のヘルパーをobservability/requestidに移行
+// X-プレフィックスは標準じゃなくて自分たちがつけたことを表すがレガシー寄りやからRequest-Idでいい
+// X-Request-Idってのは契約。awsとかcloudflareがつけることもある。その名前に合わせる。
+// そしてもしそれらが既に存在してたら尊重
+// ハードコーディングなくすためにHeaderRequestIDで集約
 const HeaderRequestID = "X-Request-Id"
 
+// 取得をここに定義したくないからwithvalueの埋め込みと取得のヘルパーをobservability/requestidに移行
 /* FromContext は logger 等から request_id を取得するための helper
 func FromContext(ctx context.Context) (string, bool) {
 	id, ok := ctx.Value(requestIDKey).(string)
 	return id, ok
 }ここで定義するとloggerが終わる*/
 
+// これは有名構文
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 既存のrequest idを尊重
-		rid := r.Header.Get(HeaderRequestID)
+		rid := r.Header.Get(HeaderRequestID) //これライフサイクル短いからridぐらいでいい
 		//TODO:長すぎたら捨てて生成し直す
+
 		if rid == "" {
 			rid = uuid.NewString()
-		}
+		} //ログに使うからuuidが丸い。分散可能、時系列不要
 
 		ctx := requestid.WithContext(r.Context(), rid)
 

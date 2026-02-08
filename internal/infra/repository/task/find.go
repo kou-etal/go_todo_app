@@ -7,7 +7,7 @@ import (
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 )
 
-func (r *Repository) FindByID(
+func (r *repository) FindByID(
 	ctx context.Context,
 	id dtask.TaskID,
 ) (*dtask.Task, error) {
