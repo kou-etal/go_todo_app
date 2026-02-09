@@ -3,6 +3,8 @@ package task
 import (
 	"errors"
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 // aggregate:=単体でフィールド変えられたくない。ルールの強さ。ルールを破られると壊れる。テーブル単位で考える。
@@ -12,6 +14,7 @@ import (
 // 何でもかんでもaggregateにしてchangeメソッド作ると良くない。
 type Task struct {
 	id          TaskID //学習用メモ　ここでDBとのマッピング定義するとdomainにDB都合入って良くない。
+	userID      user.UserID
 	title       TaskTitle
 	description TaskDescription
 	status      TaskStatus
@@ -29,6 +32,7 @@ type Tasks []*Task
 //TODO:Tasksを定義するならば定義に意味を持たせるようなメソッドをタスクに持たせる。ただ短いからTasksは微妙。
 
 func (t *Task) ID() TaskID                   { return t.id }
+func (t *Task) UserID() user.UserID          { return t.userID }
 func (t *Task) Title() TaskTitle             { return t.title }
 func (t *Task) Description() TaskDescription { return t.description }
 func (t *Task) Status() TaskStatus           { return t.status }

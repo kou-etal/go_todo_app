@@ -12,10 +12,10 @@ func (r *repository) Store(ctx context.Context, t *dtask.Task) error {
 	//queryは与える。commandは持ち込まない。
 	const q = `
 INSERT INTO task (
-  id, title, description, status, due_date,
+  id, user_id, title, description, status, due_date,
   created_at, updated_at, version
 ) VALUES (
-  :id, :title, :description, :status, :due_date,
+  :id, :user_id,:title, :description, :status, :due_date,
   :created_at, :updated_at, :version
 );
 ` //ここは不変ゆえにconstでいい。
@@ -40,12 +40,14 @@ SET
   version = :next_version
 WHERE
   id = :id
+  AND user_id = :user_id
   AND version = :version;
 ` //versionの一致まで確かめる。楽観ロック
 
 	rec := EntityToRecord(t)
 	params := map[string]any{
 		"id":           rec.ID,
+		"user_id":      rec.UserID,
 		"title":        rec.Title,
 		"description":  rec.Description,
 		"status":       rec.Status,

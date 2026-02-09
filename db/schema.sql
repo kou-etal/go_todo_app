@@ -15,9 +15,10 @@ CREATE TABLE `users`
 )
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ユーザー';
 --TODO:CHAR(36)はインデックス重い。CHAR(26)ULIDやBINARY(16)も検討
-CREATE TABLE `task`
+CREATE TABLE `task`--これtasksのほうがいい
 (
     `id`          CHAR(36) NOT NULL COMMENT 'タスクの識別子',
+    `user_id` CHAR(36) NOT NULL COMMENT '所有者ユーザーID(UUID)',
     `title`       VARCHAR(20) NOT NULL COMMENT 'タスクのタイトル',
     `description` VARCHAR(1000) NOT NULL COMMENT 'タスクの説明',
     `status`      VARCHAR(20)  NOT NULL COMMENT 'タスクの状態',
@@ -27,16 +28,21 @@ CREATE TABLE `task`
     `version`     BIGINT UNSIGNED NOT NULL COMMENT 'バージョン',
     --負債
     `due_is_null` TINYINT(1)
-    AS (dueDate IS NULL) STORED
+    AS (due_date IS NULL) STORED
     NOT NULL COMMENT '現状due_date NOT NULLなので常に0',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
     --indexないと全件とってからソートするから重くなる
-    KEY `idx_task_created_sort` (`created_at`, `id`),
-    KEY `idx_task_due_sort` (`due_is_null`, `due_date`, `id`)
+  
+    KEY `idx_task_user_created_sort` (`user_id`, `created_at`, `id`),
+KEY `idx_task_user_due_sort` (`user_id`, `due_is_null`, `due_date`, `id`),
+CONSTRAINT `fk_task_user_id`
+  FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  ON DELETE CASCADE
+
 ) Engine=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='タスク';
 --duedate not nullやのに仕様変更のためにdue_is_nullっていう主張は不可
 CREATE TABLE `email_verification_tokens` (
-  `id`CHAR(36) NOT NULL AUTO_INCREMENT COMMENT 'トークン行の識別子',
+  `id` CHAR(36) NOT NULL  COMMENT 'トークン行の識別子',--uuidでchar、intでautoincrement
   `user_id` CHAR(36) NOT NULL COMMENT '対象ユーザーID(UUID)',
   `token_hash` CHAR(64) NOT NULL COMMENT 'SHA-256(token) を hex 化したもの',
   `expires_at` DATETIME(6) NOT NULL COMMENT '有効期限',
@@ -50,6 +56,6 @@ CREATE TABLE `email_verification_tokens` (
   KEY `idx_expires_at` (`expires_at`) USING BTREE,
 
   CONSTRAINT `fk_email_verification_tokens_user_id`
-    FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='メール認証トークン';

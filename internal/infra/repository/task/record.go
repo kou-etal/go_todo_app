@@ -4,6 +4,7 @@ import "time"
 
 type TaskRecord struct {
 	ID          string    `db:"id"`
+	UserID      string    `db:"user_id"` //""忘れること多い
 	Title       string    `db:"title"`
 	Description string    `db:"description"`
 	Status      string    `db:"status"`

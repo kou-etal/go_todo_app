@@ -5,11 +5,13 @@ import (
 	"time"
 
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
+	duser "github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 
-	id := dtask.TaskID(r.ID)
+	id := dtask.TaskID(r.ID) //TODO:ちゃんとparseidで検証しよう
+	userID := duser.UserID(r.UserID)
 
 	title, err := dtask.NewTaskTitle(r.Title)
 	if err != nil {
@@ -39,6 +41,7 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 
 	return dtask.ReconstructTask(
 		id,
+		userID,
 		title,
 		description,
 		status,
@@ -53,6 +56,7 @@ func EntityToRecord(t *dtask.Task) *TaskRecord {
 
 	return &TaskRecord{
 		ID:          string(t.ID()),
+		UserID:      string(t.UserID()),
 		Title:       string(t.Title().Value()),
 		Description: string(t.Description().Value()),
 		Status:      string(t.Status()),

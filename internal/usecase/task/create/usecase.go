@@ -5,6 +5,7 @@ import (
 
 	"github.com/kou-etal/go_todo_app/internal/clock"
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 type Usecase struct {
@@ -45,7 +46,8 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	t := dtask.NewTask(title, desc, due, now)
+	userid := user.UserID("tmp") //ここは認証が完成したらuseridをhandlerから受け取るあるいはctxから取る
+	t := dtask.NewTask(userid, title, desc, due, now)
 	if err := u.repo.Store(ctx, t); err != nil {
 		return Result{}, err
 	}

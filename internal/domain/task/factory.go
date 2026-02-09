@@ -2,9 +2,12 @@ package task
 
 import (
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 func NewTask(
+	userid user.UserID,
 	title TaskTitle,
 	description TaskDescription,
 	dueDate DueDate,
@@ -14,6 +17,7 @@ func NewTask(
 
 	return &Task{
 		id:          NewTaskID(), //IDが欲しいのはdomain層の都合
+		userID:      userid,
 		title:       title,
 		description: description,
 		status:      StatusTodo,
@@ -27,6 +31,7 @@ func NewTask(
 // これは復元用。repoで使う
 func ReconstructTask(
 	id TaskID,
+	userID user.UserID,
 	title TaskTitle,
 	description TaskDescription,
 	status TaskStatus,
