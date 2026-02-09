@@ -18,6 +18,8 @@ func New(repo dtask.TaskRepository, clock clock.Clocker) *Usecase {
 func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 
 	cmd, err := normalize(cmd)
+	//外部I/O(DB/ネット)で返ってきたerrはwrapする。自分たちが定義したエラーが返ってきた場合はwrapしない->normalizeはwrapしない
+
 	if err != nil {
 		return Result{}, err
 
@@ -38,7 +40,7 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	now := u.clock.Now()
 
 	if cmd.Title != nil {
-		title, err := dtask.NewTaskTitle(*cmd.Title)
+		title, err := dtask.NewTaskTitle(*cmd.Title) //ポインタ忘れがち
 		if err != nil {
 			return Result{}, err
 		}
@@ -71,7 +73,7 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	}, nil
 }
 
-func normalizeDueOption(t int) (dtask.DueOption, error) {
+func normalizeDueOption(t int) (dtask.DueOption, error) { //Dueはusecaseに寄せる
 	switch t {
 	case 7:
 		return dtask.Due7Days, nil
