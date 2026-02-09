@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	duser "github.com/kou-etal/go_todo_app/internal/domain/user"
+	duser "github.com/kou-etal/go_todo_app/internal/domain/user" //ドメイン系はdで受け取る慣習
 )
 
-func (r *Repository) Store(ctx context.Context, u *duser.User) error {
+// ポインタと値　ポインタ->状態持つ場合、nil表現、コピー避ける、->entity、repository
+// 値->状態持たない、軽い、nilありえない、ただの入れ物->record
+// レシーバーは全部ポインタなわけない
+func (r *Repository) Store(ctx context.Context, u *duser.User) error { //まず引数と返り値を考える
 	const q = `
 INSERT INTO user (
   id, email, password_hash, user_name, email_verified_at,

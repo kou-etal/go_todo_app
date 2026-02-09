@@ -14,8 +14,10 @@ type UserRecord struct {
 	EmailVerifiedAt *time.Time `db:"email_verified_at"`
 	Created         time.Time  `db:"created_at"`
 	Updated         time.Time  `db:"updated_at"`
-	Version         uint64     `db:"version"`
+	Version         uint64     `db:"version"` //versionは負扱わない。BIGINT UNSIGNEDと合う。->uint64。
 }
+
+//DBはsnake_case慣習
 
 //EmailVerifiedAt *time.Time `db:"email_verified_at"`これいまGo nil->sql nullが自動変換されてる状況
 //join(テーブルくっつけて出力)
