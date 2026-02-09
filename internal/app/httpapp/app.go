@@ -33,11 +33,8 @@ import (
 // Buildは依存を組み立ててhttp.Handlerとcleanupを返す。
 // mainはserver起動とshutdownだけやればいい。
 // errはmainで受け取ってlogger。build側はあくまでwiring
-func Build(ctx context.Context) (http.Handler, func(), error) {
-	cfg, err := config.New()
-	if err != nil {
-		return nil, func() {}, fmt.Errorf("get config: %w", err)
-	}
+func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error) {
+	//mainとapp両方config使うからmainでnew作ってappに与える
 	clk := clock.RealClocker{}
 	lg := logger.NewSlog()
 	xdb, closeDB, err := db.NewMySQL(ctx, cfg)

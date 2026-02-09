@@ -7,13 +7,20 @@ import (
 	"time"
 )
 
+// Newは依存注入、設定、命名に分岐を委譲する目的。
+// usecaseとかのnewは依存注入、loggerのnewは命名に分岐委譲(newslog()で引数なし)
+// 今回はそれらなし
+
+//appでclk定義、clkはclocker型やからusecaseはclk.Nowするだけやけど実際はapp次第で挙動が変わる->ポリモーフィズム
+// Goは継承ではなくinterfaceのポリモーフィズム実現
+
 type Clocker interface {
 	Now() time.Time
 }
 
 type RealClocker struct{}
 
-func (r RealClocker) Now() time.Time {
+func (rc RealClocker) Now() time.Time {
 	return time.Now()
 }
 
