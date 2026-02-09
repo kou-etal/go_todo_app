@@ -37,7 +37,6 @@ func (h *BcryptHasher) Hash(plain string) (string, error) {
 
 // ログイン用の比較メソッド
 func (h *BcryptHasher) Compare(hash, plain string) error {
-	//これなんでerr返さない。
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(plain))
-	//わざわざtrueとかで返さないのがGolang
-}
+	//わざわざtrueとかで返さないのがGolang。エラーを値で扱うのがGo
+} //func CompareHashAndPassword(hashed, plain []byte) error

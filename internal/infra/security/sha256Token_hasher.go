@@ -1,6 +1,8 @@
 package security
 
 //外部ライブラリに近いからinfraに置く。
+//clockは軽いから横断判定するとpkg/的な切り方が許容される。そもそも何でもかんでもpkg/的に置くのは終わる。
+//pkg/的に切るのはclock log metrics　traceぐらい。技術実装はインフラ
 import (
 	"crypto/sha256" //これ標準ライブラリ
 	"encoding/hex"
