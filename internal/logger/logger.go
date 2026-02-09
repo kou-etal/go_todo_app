@@ -37,3 +37,8 @@ func String(key, value string) Attr {
 func Int(key string, value int) Attr {
 	return Attr{Key: key, Value: value}
 }
+
+// accesslogのbytesから使う
+func Int64(key string, value int64) Attr {
+	return Attr{Key: key, Value: value}
+}
