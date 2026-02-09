@@ -6,7 +6,7 @@ import (
 
 type TaskID string
 
-// ULIDも存在、より便利
+// ULIDも存在
 func NewTaskID() TaskID {
 	return TaskID(uuid.New().String())
 }

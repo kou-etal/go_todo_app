@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+// responsewriterはinterface。responserecoderはresponsewriterを満たす。
+// いつもはinterfaceに一致させてるけど今回は包含->構造的部分型
 func JSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)

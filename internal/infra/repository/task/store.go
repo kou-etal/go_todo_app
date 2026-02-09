@@ -7,7 +7,7 @@ import (
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 )
 
-func (r *Repository) Store(ctx context.Context, t *dtask.Task) error {
+func (r *repository) Store(ctx context.Context, t *dtask.Task) error {
 	//errorがないなら成功フラグ
 	//queryは与える。commandは持ち込まない。
 	const q = `
@@ -28,7 +28,7 @@ INSERT INTO task (
 	}
 	return nil
 }
-func (r *Repository) Update(ctx context.Context, t *dtask.Task) error {
+func (r *repository) Update(ctx context.Context, t *dtask.Task) error {
 	const q = `
 UPDATE task
 SET

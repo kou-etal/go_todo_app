@@ -21,7 +21,7 @@ CREATE TABLE `task`
     `title`       VARCHAR(20) NOT NULL COMMENT 'タスクのタイトル',
     `description` VARCHAR(1000) NOT NULL COMMENT 'タスクの説明',
     `status`      VARCHAR(20)  NOT NULL COMMENT 'タスクの状態',
-    `due_dte`     DATETIME(6) NOT NULL COMMENT 'deadline',
+    `due_date`     DATETIME(6) NOT NULL COMMENT 'deadline',
     `created_at`     DATETIME(6) NOT NULL COMMENT 'レコード作成日時',
     `updated_at`     DATETIME(6) NOT NULL COMMENT 'レコード修正日時',
     `version`     BIGINT UNSIGNED NOT NULL COMMENT 'バージョン',

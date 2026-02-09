@@ -13,7 +13,7 @@ SET deleted_at = NOW()
 WHERE id = ?で消えたように扱うのが論理削除*/
 //論理削除はログが残るし復元可能
 //今回はdeleted_at作らない物理削除
-func (r *Repository) Delete(ctx context.Context, id dtask.TaskID, version uint64) error {
+func (r *repository) Delete(ctx context.Context, id dtask.TaskID, version uint64) error {
 	const q = `
 DELETE FROM task
 WHERE
