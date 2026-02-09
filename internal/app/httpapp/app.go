@@ -33,11 +33,8 @@ import (
 // Buildは依存を組み立ててhttp.Handlerとcleanupを返す。
 // mainはserver起動とshutdownだけやればいい。
 // errはmainで受け取ってlogger。build側はあくまでwiring
-func Build(ctx context.Context) (http.Handler, func(), error) {
-	cfg, err := config.New()
-	if err != nil {
-		return nil, func() {}, fmt.Errorf("get config: %w", err)
-	}
+func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error) {
+	//mainとapp両方config使うからmainでnew作ってappに与える
 	clk := clock.RealClocker{}
 	lg := logger.NewSlog()
 	xdb, closeDB, err := db.NewMySQL(ctx, cfg)
@@ -56,7 +53,7 @@ func Build(ctx context.Context) (http.Handler, func(), error) {
 	*/
 	taskRepo := taskrepo.New(xdb)
 
-	//taskrepo.NewRepositoryはqueryer、これはもともとsqlxが満たしているメソッド。
+	//taskrepo.NewRepositoryはqueryer、これはもともとsqlxが満たしているメソッド
 	//重い抽象ではない軽い抽象
 
 	taskListUC := list.New(taskRepo)
@@ -73,18 +70,29 @@ func Build(ctx context.Context) (http.Handler, func(), error) {
 		u := userrepo.NewRepository(q)
 		v := emailverifyrepo.NewRepository(q)
 		return txdeps.NewRegister(u, v)
+	} //これ関数ので返す、db.QueryerExecerは別に格納しない。ここが分かりにくい
+	/*func newRegisterDeps(q db.QueryerExecer) usetx.RegisterDeps {
+	    u := userrepo.NewRepository(q)
+	    v := emailverifyrepo.NewRepository(q)
+	    return txdeps.NewRegister(u, v)
 	}
+
+	var makeTxDeps txrunner.RegisterDepsFactory = newRegisterDeps
+	これを省略した記法　depsの最終DI部分*/
 	beginner := xdb
 
 	txOpts := &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	}
-	runner := txrunner.New(beginner, txOpts, makeTxDeps)
+	//Isolation := 分離レベル、他のトランザクションがやっている途中のデータをどこまで見えるようにするか.
+	//LevelReadCommittedはcommit済みのデータだけ読める。これはほぼデファクト
+	//ReadOnly:=更新可能かどうか。trueは読み取り専用。動作効率の違い
+	runner := txrunner.New(beginner, txOpts, makeTxDeps) //appを経由
 	passwordHasher := security.NewBcryptHasher(14)
 	tokenGenerator := security.NewRandomTokenGenerator(32)
 	tokenHasher := security.SHA256TokenHasher{}
-	registerUC := register.New(
+	registerUC := register.New( //usecaseに与える
 		runner,
 		clk,
 		passwordHasher,

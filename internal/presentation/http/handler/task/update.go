@@ -69,6 +69,13 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
+	if req.Version == 0 { //これするんやったらversionを1始まり。
+		//TODO:いやでもポインタにしてnilで判定する方が安全。0は別に送れてしまう。
+		responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
+			Message: "invalid version",
+		})
+		return
+	}
 
 	cmd := update.Command{
 		ID:          id,
@@ -78,6 +85,7 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		DueDate:     req.DueDate,
 	} //なしはnil
 	//TODO:listでversion返す
+	//commandへ完全raw data送るわけではない。id,versionないとかおかしすぎるやつはhandlerで弾く
 
 	res, err := h.uc.Do(ctx, cmd)
 	if err != nil {

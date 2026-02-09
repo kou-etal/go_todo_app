@@ -87,7 +87,7 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	return Result{UserID: user.ID().Value()}, nil
 }
 
-//whithintxはappで組み立てるから使わなくなったコード
+//whithintxはappで組み立てるから使わなくなったコード。実務では使わないコード書くのアウトやけど今回は勉強用、思考整理のために残す。
 /*err = u.txRunner.WithinTx(ctx, func(ctx context.Context, deps usetx.Deps) error {
 	if err := deps.Users.Store(ctx, user); err != nil {
 		return err

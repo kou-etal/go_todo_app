@@ -28,7 +28,7 @@ INSERT INTO email_verification_tokens (
   :used_at,
   :created_at
 );
-`
+` //全更新はnamedexeccontext
 
 	rec := toRecord(t)
 

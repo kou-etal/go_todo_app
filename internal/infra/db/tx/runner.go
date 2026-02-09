@@ -11,6 +11,9 @@ import (
 	//これは型チェックのためだけの抽象をimportやから可。実装をimportしてたらアウト。
 )
 
+//runner具体
+//runner具体はDBの関心->infraに置くが、deps具体は配線->appに置く
+
 //interface切りすぎるなってのは意味のないinterface。境界を守るためのinterfaceは必須
 /*type UserRepo interface {
     Find(ctx context.Context, id ID) (*User, error)
@@ -22,6 +25,9 @@ import (
 */
 
 type RegisterDepsFactory func(q db.QueryerExecer) usetx.RegisterDeps
+
+//結局deps構成の最終フェーズはここ。でも具体は返さない。あくまで代入はapp層
+//これは関数の型を定義してる。QueryerExecerを受け取ってRegisterDepsを返す関数
 
 //これdb.QueryerExecerを引数に持ってるからこれが引数強制してる
 //解決策:deps作成をinfraで行う。でもそれしたらinfra責務大きくなる
@@ -35,7 +41,7 @@ type SQLxRunner struct {
 	makeTxDeps RegisterDepsFactory
 }
 
-var _ usetx.Runner = (*SQLxRunner)(nil)
+var _ usetx.Runner = (*SQLxRunner)(nil) //ここではrunner返せないから一回appを経由してrunnerを与える
 
 func New(beginner db.Beginner, opts *sql.TxOptions, makeTxDeps RegisterDepsFactory) *SQLxRunner {
 	return &SQLxRunner{
@@ -91,7 +97,7 @@ func (r *SQLxRunner) WithinTx(
 }
 
 //どっちが外側を意識する。usecase<-infra
-//どこが具体実装でどこが抽象化を意識する。
+//どこが具体実装でどこが抽象かを意識する。
 //txrunnerはinfra実装、usecase抽象。
 //普段はinfra実装、永続に関するdomain抽象やけど今回はトランザクション抽象やからdomain責務ではなくusecaseに抽象。これがだるい。
 //そもそもusecase抽象の引数をどうするか。db.ExecerQueryer持たせたらそれは楽やけどinfra層に依存するからそれは不可。

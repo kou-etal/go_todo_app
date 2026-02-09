@@ -9,7 +9,8 @@ import (
 // これ別に関数公開する必要ないからRecordToEntityではなく
 // ポインタを引数にしたらコピー減って軽くなるっていうけどそれはUserRecordレベルやったら誤差。
 // 逆にr *UserRecordこれはnilを与えた時にpanicになるっていうデメリットある。
-func toEntity(r UserRecord) (*duser.User, error) {
+// nil自己なくなるのは結構メリット
+func toEntity(r UserRecord) (*duser.User, error) { //duser.Userはコピーを作らせたくないからポインタ
 
 	//	id := duser.UserID(r.ID)。これDBを信用するって意味では別にいいけど
 	//せっかくparse作ったから使おう
@@ -59,7 +60,7 @@ func toEntity(r UserRecord) (*duser.User, error) {
 // これ別に関数公開する必要ないからEntityToRecordではなく
 
 func toRecord(u *duser.User) UserRecord {
-
+	//record作ることでentityがDBマッピングしなくなる
 	return UserRecord{
 		ID: u.ID().Value(),
 		//Email:       string(u.Email().Value()),これstringは保険にしてもいらん
