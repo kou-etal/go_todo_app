@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/kou-etal/go_todo_app/internal/clock"
+	taskevent "github.com/kou-etal/go_todo_app/internal/domain/event"
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/domain/user"
+	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
 )
 
 type Usecase struct {
@@ -46,8 +48,17 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	userid := user.UserID("tmp") //ここは認証が完成したらuseridをhandlerから受け取るあるいはctxから取る
+	userid := user.UserID("tmp") //ここは認証が完成したらuseridをctxから取る
 	t := dtask.NewTask(userid, title, desc, due, now)
+	//task_id発行はdomainに寄せてるからt.IDで取得する
+	//eventType, err := taskevent.ParseEventType("created") parseはinfraで使うようやからここで使うとダサい
+	reqID, ok := requestid.FromContext(ctx)//これerrでなくok受け取り
+		if !ok || rid == "" {
+    rid = uuid.NewString()
+}
+	}//teskevent.RequestID(reqID)これやっていいんや。
+	event := taskevent.NewCreatedEvent(userid, t.ID(),teskevent.RequestID(reqID), now, taskevent.CreatedPayload{}) //taskevent.EventCreatedこれで良い。
+	//TODO:これNewEventCreatedとか別々で作ったらより安全
 	if err := u.repo.Store(ctx, t); err != nil {
 		return Result{}, err
 	}

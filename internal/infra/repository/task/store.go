@@ -42,7 +42,9 @@ WHERE
   id = :id
   AND user_id = :user_id
   AND version = :version;
-` //versionの一致まで確かめる。楽観ロック
+`
+	//updateは3点で確かめる。
+	//versionの一致まで確かめる。楽観ロック
 
 	rec := EntityToRecord(t)
 	params := map[string]any{
