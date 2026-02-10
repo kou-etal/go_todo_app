@@ -3,6 +3,9 @@ package task
 import (
 	"errors"
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/clock"
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 // aggregate:=単体でフィールド変えられたくない。ルールの強さ。ルールを破られると壊れる。テーブル単位で考える。
@@ -12,6 +15,7 @@ import (
 // 何でもかんでもaggregateにしてchangeメソッド作ると良くない。
 type Task struct {
 	id          TaskID //学習用メモ　ここでDBとのマッピング定義するとdomainにDB都合入って良くない。
+	userID      user.UserID
 	title       TaskTitle
 	description TaskDescription
 	status      TaskStatus
@@ -29,6 +33,7 @@ type Tasks []*Task
 //TODO:Tasksを定義するならば定義に意味を持たせるようなメソッドをタスクに持たせる。ただ短いからTasksは微妙。
 
 func (t *Task) ID() TaskID                   { return t.id }
+func (t *Task) UserID() user.UserID          { return t.userID }
 func (t *Task) Title() TaskTitle             { return t.title }
 func (t *Task) Description() TaskDescription { return t.description }
 func (t *Task) Status() TaskStatus           { return t.status }
@@ -74,15 +79,12 @@ func (t *Task) MarkDone(now time.Time) error {
 }
 
 func (t *Task) updateTime(now time.Time) {
-	n := normalizeTime(now)
+	n := clock.NormalizeTime(now)
 	t.updatedAt = n
 }
 
 // ここでnormalizeTime定義するならばこれがDB都合ではなくドメインルールである理由が必要そうでないならrepo層でnormalize
-// TODO:そう考えるとdomainでnormalizeする意味ってないな
-func normalizeTime(t time.Time) time.Time {
-	return t.UTC().Truncate(time.Second)
-}
+// DONE:そう考えるとdomainでnormalizeする意味ってないな
 
 /*func (t *Task) updateTime(now time.Time) {
 	//TODO:versionの操作はrepo層に任せる

@@ -13,6 +13,7 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/infra/db"
 	txrunner "github.com/kou-etal/go_todo_app/internal/infra/db/tx"
 	emailverifyrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/emailverify"
+	taskeventrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/event"
 	taskrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/task"
 	userrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/user"
 	"github.com/kou-etal/go_todo_app/internal/infra/security"
@@ -57,16 +58,17 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 	//重い抽象ではない軽い抽象
 
 	taskListUC := list.New(taskRepo)
-	taskCreateUC := create.New(taskRepo, clk)
+
 	taskUpdateUC := update.New(taskRepo, clk)
 	taskDeleteUC := remove.New(taskRepo)
 
 	taskListHandler := task.NewList(taskListUC, lg)
-	taskCreateHandler := task.NewCreate(taskCreateUC, lg)
+
 	taskUpdateHandler := task.NewUpdate(taskUpdateUC, lg)
 	taskDeleteHandler := task.NewDelete(taskDeleteUC, lg)
+
 	//user系
-	var makeTxDeps txrunner.RegisterDepsFactory = func(q db.QueryerExecer) usetx.RegisterDeps {
+	makeRegisterDeps := func(q db.QueryerExecer) usetx.RegisterDeps {
 		u := userrepo.NewRepository(q)
 		v := emailverifyrepo.NewRepository(q)
 		return txdeps.NewRegister(u, v)
@@ -88,17 +90,27 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 	//Isolation := 分離レベル、他のトランザクションがやっている途中のデータをどこまで見えるようにするか.
 	//LevelReadCommittedはcommit済みのデータだけ読める。これはほぼデファクト
 	//ReadOnly:=更新可能かどうか。trueは読み取り専用。動作効率の違い
-	runner := txrunner.New(beginner, txOpts, makeTxDeps) //appを経由
+	registerRunner := txrunner.New(beginner, txOpts, makeRegisterDeps) //appを経由
 	passwordHasher := security.NewBcryptHasher(14)
 	tokenGenerator := security.NewRandomTokenGenerator(32)
 	tokenHasher := security.SHA256TokenHasher{}
 	registerUC := register.New( //usecaseに与える
-		runner,
+		registerRunner,
 		clk,
 		passwordHasher,
 		tokenGenerator,
 		tokenHasher,
 	)
+
+	makeTaskEventDeps := func(q db.QueryerExecer) usetx.TaskEventDeps {
+		t := taskrepo.New(q)
+		e := taskeventrepo.New(q)
+		return txdeps.NewTaskEvent(t, e)
+	}
+	taskEventRunner := txrunner.New[usetx.TaskEventDeps](beginner, txOpts, makeTaskEventDeps)
+	taskCreateUC := create.New(taskEventRunner, clk)
+	taskCreateHandler := task.NewCreate(taskCreateUC, lg)
+
 	userRegisterHandler := userhandler.NewRegister(registerUC, lg)
 
 	h := router.New(router.Deps{

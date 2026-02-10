@@ -7,7 +7,7 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
 )
 
-// X-プレフィックスは標準じゃなくて自分たちがつけたことを表すがレガシー寄りやからRequest-Idでいい
+// X-プレフィックスは標準じゃなくて自分たちがつけたことを表すがレガシー寄りやからRequest-Idでもいい
 // X-Request-Idってのは契約。awsとかcloudflareがつけることもある。その名前に合わせる。
 // そしてもしそれらが既に存在してたら尊重
 // ハードコーディングなくすためにHeaderRequestIDで集約

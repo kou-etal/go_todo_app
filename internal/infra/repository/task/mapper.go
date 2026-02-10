@@ -5,11 +5,13 @@ import (
 	"time"
 
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
+	duser "github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 
-	id := dtask.TaskID(r.ID)
+	id := dtask.TaskID(r.ID) //TODO:ちゃんとparseidで検証しよう
+	userID := duser.UserID(r.UserID)
 
 	title, err := dtask.NewTaskTitle(r.Title)
 	if err != nil {
@@ -39,6 +41,7 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 
 	return dtask.ReconstructTask(
 		id,
+		userID,
 		title,
 		description,
 		status,
@@ -52,13 +55,16 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 func EntityToRecord(t *dtask.Task) *TaskRecord {
 
 	return &TaskRecord{
-		ID:          string(t.ID()),
-		Title:       string(t.Title().Value()),
-		Description: string(t.Description().Value()),
-		Status:      string(t.Status()),
+		ID:          t.ID().Value(), //これdomainでstringにキャストして返してるのにもっかいstringは冗長。
+		UserID:      t.UserID().Value(),
+		Title:       t.Title().Value(),
+		Description: t.Description().Value(),
+		Status:      t.Status().Value(),
 		DueDate:     time.Time(t.DueDate().Value()),
 		Created:     t.CreatedAt(),
 		Updated:     t.UpdatedAt(),
 		Version:     t.Version(),
 	}
 }
+
+//外から中(record->entity)は疑う。中から外(entity->record)は信用する

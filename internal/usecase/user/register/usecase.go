@@ -10,7 +10,7 @@ import (
 )
 
 type Usecase struct {
-	tx             usetx.Runner
+	tx             usetx.Runner[usetx.RegisterDeps]
 	clock          clock.Clocker
 	passwordHasher duser.PasswordHasher
 	tokenGenerator dverify.TokenGenerator
@@ -18,7 +18,7 @@ type Usecase struct {
 }
 
 func New(
-	tx usetx.Runner,
+	tx usetx.Runner[usetx.RegisterDeps], //ジェネリクス
 	clock clock.Clocker,
 	passwordHasher duser.PasswordHasher,
 	tokenGenerator dverify.TokenGenerator,

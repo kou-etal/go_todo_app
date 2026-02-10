@@ -2,18 +2,23 @@ package task
 
 import (
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/clock"
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 func NewTask(
+	userid user.UserID,
 	title TaskTitle,
 	description TaskDescription,
 	dueDate DueDate,
 	now time.Time,
 ) *Task { //Entityはコピーされない。ポインタで返す
-	n := normalizeTime(now)
+	n := clock.NormalizeTime(now)
 
 	return &Task{
 		id:          NewTaskID(), //IDが欲しいのはdomain層の都合
+		userID:      userid,
 		title:       title,
 		description: description,
 		status:      StatusTodo,
@@ -27,6 +32,7 @@ func NewTask(
 // これは復元用。repoで使う
 func ReconstructTask(
 	id TaskID,
+	userID user.UserID,
 	title TaskTitle,
 	description TaskDescription,
 	status TaskStatus,
@@ -52,7 +58,7 @@ const maxDueDays = 30 //気遣い
 // ただの相対の状態遷移ロジックはentityに置く
 // 相対ではないnewのロジック
 func NewDueDateFromOption(now time.Time, opt DueOption) (DueDate, error) {
-	now = normalizeTime(now) //factory側で秒
+	now = clock.NormalizeTime(now) //factory側で秒
 
 	if opt <= 0 {
 		return DueDate{}, ErrInvalidDueOption

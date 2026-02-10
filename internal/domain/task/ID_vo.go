@@ -17,7 +17,7 @@ func ParseTaskID(v string) (TaskID, error) {
 		return "", ErrInvalidID
 	}
 	return TaskID(v), nil
-}
+} //これはtoEntityで使う。
 func (id TaskID) Value() string {
 	return string(id)
 }
