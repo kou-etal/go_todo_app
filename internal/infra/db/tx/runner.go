@@ -7,7 +7,6 @@ import (
 
 	"github.com/kou-etal/go_todo_app/internal/infra/db"
 	//これするぐらいなら同じdbパッケージでrunner定義すればよくねと思うけどtxrunnerはアプリ都合やから分けたほうがいいんか
-	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 	//これは型チェックのためだけの抽象をimportやから可。実装をimportしてたらアウト。
 )
 
@@ -23,8 +22,9 @@ import (
 }
 これは意味ない。
 */
-
-type RegisterDepsFactory func(q db.QueryerExecer) usetx.RegisterDeps
+//depsを増やす、runnerは増やさない。
+//type RegisterDepsFactory func(q db.QueryerExecer) usetx.RegisterDeps
+type DepsFactory[D any] func(q db.QueryerExecer) D
 
 //結局deps構成の最終フェーズはここ。でも具体は返さない。あくまで代入はapp層
 //これは関数の型を定義してる。QueryerExecerを受け取ってRegisterDepsを返す関数
@@ -35,25 +35,26 @@ type RegisterDepsFactory func(q db.QueryerExecer) usetx.RegisterDeps
 //namedexec使えないさらにせっかくsqlxwrapper作ってsqlx前提にしたのにusecaseでまたwrapper作るの良くわからん
 //それらの折衷案の設計
 
-type SQLxRunner struct {
+type SQLxRunner[D any] struct {
 	beginner   db.Beginner
 	opts       *sql.TxOptions
-	makeTxDeps RegisterDepsFactory
+	makeTxDeps DepsFactory[D]
 }
 
-var _ usetx.Runner = (*SQLxRunner)(nil) //ここではrunner返せないから一回appを経由してrunnerを与える
+//これあかんの？
+//var _ usetx.Runner[D] = (*SQLxRunner[D])(nil) ここではrunner返せないから一回appを経由してrunnerを与える
 
-func New(beginner db.Beginner, opts *sql.TxOptions, makeTxDeps RegisterDepsFactory) *SQLxRunner {
-	return &SQLxRunner{
+func New[D any](beginner db.Beginner, opts *sql.TxOptions, makeTxDeps DepsFactory[D]) *SQLxRunner[D] {
+	return &SQLxRunner[D]{
 		beginner:   beginner,
 		opts:       opts,
 		makeTxDeps: makeTxDeps,
 	}
 }
 
-func (r *SQLxRunner) WithinTx(
+func (r *SQLxRunner[D]) WithinTx(
 	ctx context.Context,
-	fn func(ctx context.Context, deps usetx.RegisterDeps) error,
+	fn func(ctx context.Context, deps D) error,
 ) (retErr error) {
 	//deferで追記するから名前付き戻り値
 	tx, err := r.beginner.BeginTxx(ctx, r.opts) //tx作成

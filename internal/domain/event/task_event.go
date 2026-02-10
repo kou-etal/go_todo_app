@@ -81,6 +81,7 @@ func (e *TaskEvent) Payload() any          { return e.payload }
 func NewCreatedEvent(
 	userID user.UserID,
 	taskID task.TaskID,
+	requestID RequestID,
 	now time.Time,
 	payload CreatedPayload, //,忘れるミス
 ) *TaskEvent {

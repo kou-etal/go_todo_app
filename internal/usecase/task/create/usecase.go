@@ -3,20 +3,22 @@ package create
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/kou-etal/go_todo_app/internal/clock"
 	taskevent "github.com/kou-etal/go_todo_app/internal/domain/event"
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/domain/user"
 	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
+	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 )
 
 type Usecase struct {
-	repo  dtask.TaskRepository
+	tx    usetx.Runner[usetx.TaskEventDeps]
 	clock clock.Clocker
 }
 
-func New(repo dtask.TaskRepository, clock clock.Clocker) *Usecase {
-	return &Usecase{repo: repo, clock: clock}
+func New(tx usetx.Runner[usetx.TaskEventDeps], clock clock.Clocker) *Usecase {
+	return &Usecase{tx: tx, clock: clock}
 }
 
 // mapperは使わない。newtaskを使う
@@ -48,20 +50,32 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	userid := user.UserID("tmp") //ここは認証が完成したらuseridをctxから取る
-	t := dtask.NewTask(userid, title, desc, due, now)
+	userID := user.UserID("tmp") //ここは認証が完成したらuseridをctxから取る
+	t := dtask.NewTask(userID, title, desc, due, now)
 	//task_id発行はdomainに寄せてるからt.IDで取得する
 	//eventType, err := taskevent.ParseEventType("created") parseはinfraで使うようやからここで使うとダサい
-	reqID, ok := requestid.FromContext(ctx)//これerrでなくok受け取り
-		if !ok || rid == "" {
-    rid = uuid.NewString()
-}
-	}//teskevent.RequestID(reqID)これやっていいんや。
-	event := taskevent.NewCreatedEvent(userid, t.ID(),teskevent.RequestID(reqID), now, taskevent.CreatedPayload{}) //taskevent.EventCreatedこれで良い。
-	//TODO:これNewEventCreatedとか別々で作ったらより安全
-	if err := u.repo.Store(ctx, t); err != nil {
+	reqID, ok := requestid.FromContext(ctx) //これerrでなくok受け取り
+	if !ok || reqID == "" {
+		reqID = uuid.NewString()
+	}
+
+	//teskevent.RequestID(reqID)これやっていいんや。
+	event := taskevent.NewCreatedEvent(
+		userID, t.ID(), taskevent.RequestID(reqID), now, taskevent.CreatedPayload{},
+	)
+
+	if err := u.tx.WithinTx(ctx, func(ctx context.Context, deps usetx.TaskEventDeps) error {
+		if err := deps.TaskRepo().Store(ctx, t); err != nil {
+			return err
+		}
+		if err := deps.TaskEventRepo().Insert(ctx, event); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return Result{}, err
 	}
+
 	return Result{ID: t.ID().Value()}, nil
 }
 
