@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kou-etal/go_todo_app/internal/clock"
 	"github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
@@ -68,6 +69,14 @@ type TaskEvent struct {
 	payload    any
 }
 
+func (e *TaskEvent) ID() EventID           { return e.id }
+func (e *TaskEvent) EventType() EventType  { return e.eventType }
+func (e *TaskEvent) UserID() user.UserID   { return e.userID }
+func (e *TaskEvent) TaskID() task.TaskID   { return e.taskID }
+func (e *TaskEvent) RequestID() RequestID  { return e.requestID }
+func (e *TaskEvent) OccurredAt() time.Time { return e.occurredAt }
+func (e *TaskEvent) Payload() any          { return e.payload }
+
 // usecaseごとにdonstructer分けることでanyを安全に扱う。
 func NewCreatedEvent(
 	userID user.UserID,
@@ -75,7 +84,7 @@ func NewCreatedEvent(
 	now time.Time,
 	payload CreatedPayload, //,忘れるミス
 ) *TaskEvent {
-	n := normalizeTime(now) //domain責務
+	n := clock.NormalizeTime(now) //normalizetimeはinfraからも使いたくなったからutilsに置いた。
 
 	return &TaskEvent{
 		id:         EventID(uuid.New().String()),
@@ -92,7 +101,7 @@ func NewDeletedEvent(
 	now time.Time,
 	payload DeletedPayload,
 ) *TaskEvent {
-	n := normalizeTime(now)
+	n := clock.NormalizeTime(now)
 
 	return &TaskEvent{
 		id:         EventID(uuid.New().String()),
@@ -109,7 +118,7 @@ func NewUpdatedEvent(
 	now time.Time,
 	payload UpdatedPayload,
 ) *TaskEvent {
-	n := normalizeTime(now)
+	n := clock.NormalizeTime(now)
 
 	return &TaskEvent{
 		id:         EventID(uuid.New().String()),
@@ -120,7 +129,3 @@ func NewUpdatedEvent(
 		payload:    payload,
 	}
 }
-
-func normalizeTime(t time.Time) time.Time {
-	return t.UTC().Truncate(time.Second)
-} //TODO:これ共有にしたほうがいい

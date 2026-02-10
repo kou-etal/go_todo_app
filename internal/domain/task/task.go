@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/kou-etal/go_todo_app/internal/clock"
 	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
@@ -78,15 +79,12 @@ func (t *Task) MarkDone(now time.Time) error {
 }
 
 func (t *Task) updateTime(now time.Time) {
-	n := normalizeTime(now)
+	n := clock.NormalizeTime(now)
 	t.updatedAt = n
 }
 
 // ここでnormalizeTime定義するならばこれがDB都合ではなくドメインルールである理由が必要そうでないならrepo層でnormalize
-// TODO:そう考えるとdomainでnormalizeする意味ってないな
-func normalizeTime(t time.Time) time.Time {
-	return t.UTC().Truncate(time.Second)
-}
+// DONE:そう考えるとdomainでnormalizeする意味ってないな
 
 /*func (t *Task) updateTime(now time.Time) {
 	//TODO:versionの操作はrepo層に任せる
