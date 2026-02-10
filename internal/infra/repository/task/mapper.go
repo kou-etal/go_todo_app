@@ -55,14 +55,16 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 func EntityToRecord(t *dtask.Task) *TaskRecord {
 
 	return &TaskRecord{
-		ID:          string(t.ID()),
-		UserID:      string(t.UserID()),
-		Title:       string(t.Title().Value()),
-		Description: string(t.Description().Value()),
-		Status:      string(t.Status()),
+		ID:          t.ID().Value(), //これdomainでstringにキャストして返してるのにもっかいstringは冗長。
+		UserID:      t.UserID().Value(),
+		Title:       t.Title().Value(),
+		Description: t.Description().Value(),
+		Status:      t.Status().Value(),
 		DueDate:     time.Time(t.DueDate().Value()),
 		Created:     t.CreatedAt(),
 		Updated:     t.UpdatedAt(),
 		Version:     t.Version(),
 	}
 }
+
+//外から中(record->entity)は疑う。中から外(entity->record)は信用する
