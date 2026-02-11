@@ -92,6 +92,7 @@ func NewCreatedEvent(
 		eventType:  EventCreated,
 		userID:     userID,
 		taskID:     taskID,
+		requestID:  requestID,
 		occurredAt: n,
 		payload:    payload,
 	}
@@ -99,6 +100,7 @@ func NewCreatedEvent(
 func NewDeletedEvent(
 	userID user.UserID,
 	taskID task.TaskID,
+	requestID RequestID,
 	now time.Time,
 	payload DeletedPayload,
 ) *TaskEvent {
@@ -109,6 +111,7 @@ func NewDeletedEvent(
 		eventType:  EventDeleted,
 		userID:     userID,
 		taskID:     taskID,
+		requestID:  requestID,
 		occurredAt: n,
 		payload:    payload,
 	}
@@ -116,6 +119,7 @@ func NewDeletedEvent(
 func NewUpdatedEvent(
 	userID user.UserID,
 	taskID task.TaskID,
+	requestID RequestID,
 	now time.Time,
 	payload UpdatedPayload,
 ) *TaskEvent {
@@ -126,6 +130,7 @@ func NewUpdatedEvent(
 		eventType:  EventUpdated,
 		userID:     userID,
 		taskID:     taskID,
+		requestID:  requestID,
 		occurredAt: n,
 		payload:    payload,
 	}
