@@ -59,3 +59,20 @@ CREATE TABLE `email_verification_tokens` (
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='メール認証トークン';
+
+CREATE TABLE `task_events` (
+  `id`             CHAR(36)        NOT NULL COMMENT 'イベントID（UUID）',
+  `user_id`        CHAR(36)        NOT NULL COMMENT '操作ユーザーID',
+  `task_id`        CHAR(36)        NOT NULL COMMENT '対象タスクID',
+  `request_id`     CHAR(36)        NOT NULL COMMENT 'リクエストID（トレーシング用）',
+  `event_type`     VARCHAR(20)     NOT NULL COMMENT 'イベント種別（created/updated/deleted）',
+  `occurred_at`    DATETIME(6)     NOT NULL COMMENT 'イベント発生日時',
+  `emitted_at`     DATETIME(6)     NULL     COMMENT '外部配信日時（未配信ならNULL）',
+  `schema_version` INT UNSIGNED    NOT NULL COMMENT 'ペイロードのスキーマバージョン',
+  `payload`        JSON            NOT NULL COMMENT 'イベントペイロード',
+
+  PRIMARY KEY (`id`),
+  KEY `idx_task_events_emitted` (`emitted_at`),
+  CONSTRAINT `fk_task_events_task_id`
+    FOREIGN KEY (`task_id`) REFERENCES `task` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='タスクイベント（Outbox）';
