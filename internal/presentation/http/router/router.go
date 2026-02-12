@@ -41,6 +41,8 @@ func New(deps Deps) http.Handler {
 	mux.Handle("/tasks", tasksHandler(deps.Task))
 	//item
 	mux.Handle("/tasks/", taskHandler(deps.Task))
+
+	mux.Handle("/users", usersHandler(deps.User))
 	//h := middleware.RequestID(mux)  middlewareのチェーンはここでやると汚い
 
 	return mux

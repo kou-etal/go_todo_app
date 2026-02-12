@@ -43,6 +43,7 @@ func ReconstructTask(
 ) *Task {
 	return &Task{
 		id:          id,
+		userID:      userID,
 		title:       title,
 		description: description,
 		status:      status,

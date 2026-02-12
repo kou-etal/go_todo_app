@@ -32,7 +32,9 @@ func (s *stubRepo) Update(ctx context.Context, t *dtask.Task) error {
 func (s *stubRepo) FindByID(ctx context.Context, id dtask.TaskID) (*dtask.Task, error) {
 	return nil, nil
 }
-func (s *stubRepo) Delete(ctx context.Context, id dtask.TaskID, version uint64) error
+func (s *stubRepo) Delete(ctx context.Context, id dtask.TaskID, version uint64) error {
+	return nil
+}
 
 var _ dtask.TaskRepository = (*stubRepo)(nil)
 
