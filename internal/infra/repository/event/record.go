@@ -32,6 +32,6 @@ type TaskEventDLQRecord struct {
 	SchemaVersion uint32          `db:"schema_version"` //これは必須 version1はこういう操作。
 	Payload       json.RawMessage `db:"payload"`        //DB側でJSON
 	AttemptCount  uint32          `db:"attempt_count"`
-	LastError     *string         `db:"last_error"` //エラー出ずに詰む場合もある。それをundefinedとか入れたら良くない。null許容。
+	LastError     *string         `db:"last_error"` //エラー出ずに詰む場合もある。それをundefinedとか入れたら良くない。nilあり。
 	DeadAt        time.Time       `db:"dead_at"`
 }

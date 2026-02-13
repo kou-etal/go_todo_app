@@ -1,6 +1,6 @@
 package taskeventrepo
 
-//送る準備の段階。claim.go
+//実際の送信ではなく送る準備の段階。
 import (
 	"context"
 	"fmt"
@@ -142,7 +142,9 @@ WHERE id IN (?)
 	//いつもの楽観ロックとは違い起こりうるケース。やからinfraエラーにしない。
 }
 
-// ReleaseLease はリースをクリアする（失敗時の後処理用）。ここでattempt_countは操作しない。
+// ReleaseLease はリースをクリアする（外部依存失敗時の後処理用）。
+// 送信失敗ではなくそもそもネットワークの問題とか予期せぬ事態での失敗。これはattempt_countは操作しないが適切。
+// だから正常系のemit.goには置かない。
 func (r *repository) ReleaseLease(
 	ctx context.Context,
 	ids []string,
