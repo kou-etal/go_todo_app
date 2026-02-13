@@ -34,8 +34,8 @@ type stubQE struct {
 	gotSelectArgs []any
 
 	// ExecContext用
-	execCalls []execCall
-	execErr   error
+	execCalls    []execCall
+	execErr      error
 	execAffected int64
 }
 

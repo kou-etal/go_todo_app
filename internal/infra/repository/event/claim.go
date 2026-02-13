@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/kou-etal/go_todo_app/internal/worker/outbox"
 )
 
 // Claim は未処理イベントを FOR UPDATE SKIP LOCKED でロックし取得する。
@@ -15,7 +16,7 @@ func (r *repository) Claim(
 	ctx context.Context,
 	limit int,
 	now time.Time, //repoでtime定義ではなくclockから受け取る->テストしやすい。
-) ([]TaskEventRecord, error) {
+) ([]outbox.ClaimedEvent, error) {
 	//ここは全カラム取ってない。大量イベント取得ではスキャンコストが大きな差になる。select段階で状態制御系カラムはスキャンしない。
 
 	const q = `
@@ -39,28 +40,73 @@ FOR UPDATE SKIP LOCKED;
 	if err := r.q.SelectContext(ctx, &records, q, now, now, limit); err != nil { //まずctx与える。
 		return nil, fmt.Errorf("taskevent claim select: %w", err)
 	}
-	return records, nil
+	return toClaimedEvents(records), nil
 }
+
+// infra(external) → worker(internal) の依存は正しい。
+// toClaimedEvents はDB構造体をworker層のDTOに変換する。
+//これがないとusecaseがinfra依存になる。
+//変換コスト<clean architecture崩壊の判断。いつもはmapperで別に分けてるけど今回は分けない。ここでしか使わない。
+//全部じゃなくて使うやつだけ返す。
+
+func toClaimedEvents(records []TaskEventRecord) []outbox.ClaimedEvent {
+	events := make([]outbox.ClaimedEvent, len(records)) //makeの構文いつも忘れる。make(スライスの型、長さ)
+	for i, r := range records {
+		events[i] = outbox.ClaimedEvent{
+			ID:            r.ID,
+			UserID:        r.UserID,
+			TaskID:        r.TaskID,
+			RequestID:     r.RequestID,
+			EventType:     r.EventType,
+			OccurredAt:    r.OccurredAt,
+			SchemaVersion: r.SchemaVersion,
+			Payload:       r.Payload,
+			AttemptCount:  r.AttemptCount,
+		}
+	}
+	return events
+}
+
+/*
+	for i := range records {
+			events[i] = outbox.ClaimedEvent{
+				ID:            records[i].ID,
+				UserID:        records[i].UserID,
+				TaskID:        records[i].TaskID,
+				RequestID:     records[i].RequestID,
+				EventType:     records[i].EventType,
+				OccurredAt:    records[i].OccurredAt,
+				SchemaVersion: records[i].SchemaVersion,
+				Payload:       records[i].Payload,
+				AttemptCount:  records[i].AttemptCount,
+			}
+		}これは冗長*/
 
 // SetLease は指定されたイベントIDのリースを設定する。
 // Claim で取得した行のうち、Go側でバイト上限チェック後に確定したIDだけを対象とする。
 func (r *repository) SetLease(
+
 	ctx context.Context,
 	ids []string,
 	leaseOwner string,
 	leaseDuration time.Duration,
 	now time.Time,
+
 ) error {
 	if len(ids) == 0 {
 		return nil
 	}
 	const base = `
+
 UPDATE task_events
 SET lease_owner = ?,
-    lease_until = ?,
-    claimed_at = ?
+
+	lease_until = ?,
+	claimed_at = ?
+
 WHERE id IN (?);
 `
+
 	//ここはwhereで条件考えてない。selectで保証してそれを同一txで使ってる。ここでもう一回whereでガードするのは冗長。
 	//claimed_atはselectで設定したほうがよくねと思ったけど違う。selectした後超過分は削られるからここで設定が適切。
 	//そもそもロックで見つけた時刻ではなく担当が確定した時刻が定義
@@ -98,7 +144,8 @@ Worker B が Claim でその行を拾って SetLease（lease_owner=B, lease_unti
 その後 A が復帰して「延長しよ」と ExtendLease を投げる
 → でも DB上の owner/lease_until はもう違う
 → RowsAffected=0
-延長はselect経由しないからロック効かない。*/
+延長はselect経由しないからロック効かない。
+*/
 func (r *repository) ExtendLease(
 	ctx context.Context,
 	ids []string,
