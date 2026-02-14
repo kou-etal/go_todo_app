@@ -94,7 +94,8 @@ func batchID(eventIDs []string, claimedAt time.Time, schemaVersion uint32) strin
 	    Size() int
 	    BlockSize() int
 	}*/
-	//これはセキュリティ用途じゃないからinternal/security使わない。そもそも実装も違う。普通にsha256使う。別に差し替えもしない。
+	//これはセキュリティ用途じゃないからinternal/security使わない。
+	// そもそも実装も違う。普通にsha256使う。別に差し替えもしない。"crypto/sha256"依存許容。
 	for _, id := range sorted { //idがインデックスではなく値。
 		h.Write([]byte(id)) //writeはbyte引数。writeで計算機に値を詰める->sumで取り出す。
 		//TODO:["ab","c"] と ["a","bc"]考慮

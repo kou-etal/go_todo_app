@@ -20,7 +20,7 @@ type Config struct {
 	ChunkMaxBytes     int64
 	LeaseDuration     time.Duration //これはlease_untilで使う。now.Add(leaseDuration)
 	HeartbeatInterval time.Duration //HeartbeatInterval<LeaseDurationにしないと切れるのに延長されない。
-	MaxAttempt        int
+	MaxAttempt        uint32        //実際はuint32も使わないがunsigned intと比べやすいようにuint32
 	BackoffBase       time.Duration
 }
 
