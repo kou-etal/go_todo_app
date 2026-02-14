@@ -184,7 +184,9 @@ func (w *Worker) emitToS3(
 	//ここでのerrはemitErrになる。
 }
 
-// handleFailure はアップロード失敗時の処理。max_attempt 超過で DLQ に移動。
+// handleFailure はアップロード失敗時の処理。
+// レコードごとの attempt_count を見て DLQ 行きと retry を個別判定する。
+// 同一バッチ内で attempt_count が異なるレコードが混在しうるため。
 func (w *Worker) handleFailure(
 	ctx context.Context,
 	ids []string,
@@ -193,31 +195,40 @@ func (w *Worker) handleFailure(
 ) {
 	w.logger.Error(ctx, "emit failed", emitErr, logger.Int("count", len(ids)))
 
-	// max_attempt チェック: records の中で最大の attempt_count を見る
+	// attempt_count+1 で MaxAttempt に到達するかを個別判定して振り分け
 	//schemaが INT UNSIGNEDの時、多くのドライバや生成ツールはuint32にマッピングする。
 	//BIGINT UNSIGNEDの場合uint64。今回の場合uint32で十分。
-	var maxCount uint32
-	for i := range records {
-		if records[i].AttemptCount >= maxCount {
-			maxCount = records[i].AttemptCount
-		} //これmax探索アルゴリズム
-		//Go では普通に自分で回して最大値取るのが標準。ライブラリでmax求めないこと多い。浸透してないから読みにくい。
-		//TODO:これattemptcount低いのにDLQが起こるから全部同一を保証する設計にする
+	//max探索アルゴリズム
+	//Go では普通に自分で回して最大値取るのが標準。ライブラリでmax求めないこと多い。浸透してないから読みにくい。
+	//attemptcount低いのにDLQが起こるからmax判定だけでなくdlqとretryに分ける。
+	var dlqIDs []string
+	var retryIDs []string
+	var maxRetryCount uint32
+
+	for _, r := range records {
+		if r.AttemptCount+1 >= w.cfg.MaxAttempt {
+			dlqIDs = append(dlqIDs, r.ID)
+		} else {
+			retryIDs = append(retryIDs, r.ID)
+			if r.AttemptCount >= maxRetryCount {
+				maxRetryCount = r.AttemptCount
+			}
+		}
 	}
 
-	// attempt_count は SetLease 時点の値。今回の失敗で +1 されるので +1 で比較。
-	if maxCount+1 >= w.cfg.MaxAttempt {
-		w.logger.Warn(ctx, "moving to DLQ", logger.Attr{Key: "ids", Value: ids}, logger.Int("attempts", int(maxCount)+1))
-		if err := w.repo.MoveToDLQ(ctx, ids, emitErr.Error(), time.Now()); err != nil {
-			//引数はerrorではなくstring。emitErr.Error()使う。
+	if len(dlqIDs) > 0 {
+		w.logger.Warn(ctx, "moving to DLQ", logger.Attr{Key: "ids", Value: dlqIDs}, logger.Int("count", len(dlqIDs)))
+		if err := w.repo.MoveToDLQ(ctx, dlqIDs, emitErr.Error(), time.Now()); err != nil {
+			//err型ではなくstringが欲しいから emitErr.Error()
 			w.logger.Error(ctx, "move to DLQ failed", err)
 		}
-		return
 	}
 
-	nextAt := NextAttemptAt(time.Now(), int(maxCount)+1, w.cfg.BackoffBase) //ここはキャストする。
-	if err := w.repo.MarkRetry(ctx, ids, w.ownerID, nextAt); err != nil {
-		w.logger.Error(ctx, "mark retry failed", err)
+	if len(retryIDs) > 0 {
+		nextAt := NextAttemptAt(time.Now(), int(maxRetryCount)+1, w.cfg.BackoffBase)
+		if err := w.repo.MarkRetry(ctx, retryIDs, w.ownerID, nextAt); err != nil {
+			w.logger.Error(ctx, "mark retry failed", err)
+		}
 	}
 }
 
