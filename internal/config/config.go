@@ -15,7 +15,7 @@ type Config struct {
 }
 
 func New() (*Config, error) {
-	cfg := &Config{}
+	cfg := &Config{} //DIの中心。共有する。大きくなりやすいからポインタ。別に動的であるからポインタなわけではない。
 	if err := env.Parse(cfg); err != nil {
 		return nil, err
 	}

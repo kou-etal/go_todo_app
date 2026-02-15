@@ -12,6 +12,7 @@ import (
 // clean architectureではusecaseがinfraをimportは不可。
 
 // ClaimedEvent はワーカーが扱うイベントの表現。
+
 // infra層のDB構造体(TaskEventRecord)をworkerに関与させないためのDTO。
 type ClaimedEvent struct {
 	ID            string

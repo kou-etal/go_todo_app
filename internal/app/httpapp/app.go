@@ -58,14 +58,7 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 	//重い抽象ではない軽い抽象
 
 	taskListUC := list.New(taskRepo)
-
-	taskUpdateUC := update.New(taskRepo, clk)
-	taskDeleteUC := remove.New(taskRepo)
-
 	taskListHandler := task.NewList(taskListUC, lg)
-
-	taskUpdateHandler := task.NewUpdate(taskUpdateUC, lg)
-	taskDeleteHandler := task.NewDelete(taskDeleteUC, lg)
 
 	//user系
 	makeRegisterDeps := func(q db.QueryerExecer) usetx.RegisterDeps {
@@ -110,6 +103,11 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 	taskEventRunner := txrunner.New[usetx.TaskEventDeps](beginner, txOpts, makeTaskEventDeps)
 	taskCreateUC := create.New(taskEventRunner, clk)
 	taskCreateHandler := task.NewCreate(taskCreateUC, lg)
+
+	taskUpdateUC := update.New(taskEventRunner, clk)
+	taskDeleteUC := remove.New(taskEventRunner, clk)
+	taskUpdateHandler := task.NewUpdate(taskUpdateUC, lg)
+	taskDeleteHandler := task.NewDelete(taskDeleteUC, lg)
 
 	userRegisterHandler := userhandler.NewRegister(registerUC, lg)
 

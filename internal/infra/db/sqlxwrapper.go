@@ -31,6 +31,7 @@ type Queryer interface {
 type QueryerExecer interface { //interface作る->型チェック
 	Queryer
 	Execer
+	Rebind(query string) string
 }
 
 var (

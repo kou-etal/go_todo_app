@@ -81,6 +81,10 @@ func (s *stubQueryerExecer) NamedExecContext(
 	return nil, errors.New("stubQueryerExecuer.NamedExecContext: unexpected call")
 }
 
+func (s *stubQueryerExecer) Rebind(query string) string {
+	return query // stubではそのまま返す（MySQLと同じ挙動）
+}
+
 // TaskRecord作成のヘルパー。
 // Goの慣習mustXxx=失敗してもエラー拾わない　テストデータ作成はエラー拾ったとこで意味ない。
 func mustRecord(id string, created time.Time, due time.Time) TaskRecord {
