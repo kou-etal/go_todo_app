@@ -17,6 +17,7 @@ type usecaseLogger interface {
 type Logger interface {
 	Debug(ctx context.Context, msg string, err error, attrs ...Attr)
 	Info(ctx context.Context, msg string, attrs ...Attr)
+	Warn(ctx context.Context, msg string, attrs ...Attr)
 	Error(ctx context.Context, msg string, err error, attrs ...Attr)
 }
 

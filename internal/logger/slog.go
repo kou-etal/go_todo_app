@@ -41,6 +41,10 @@ func (s *slogLogger) Info(ctx context.Context, msg string, attrs ...Attr) {
 	s.l.Info(msg, s.buildAttrs(ctx, nil, attrs...)...)
 }
 
+func (s *slogLogger) Warn(ctx context.Context, msg string, attrs ...Attr) {
+	s.l.Warn(msg, s.buildAttrs(ctx, nil, attrs...)...)
+}
+
 func (s *slogLogger) Error(ctx context.Context, msg string, err error, attrs ...Attr) {
 	s.l.Error(msg, s.buildAttrs(ctx, err, attrs...)...)
 }
@@ -52,7 +56,7 @@ func (s *slogLogger) buildAttrs(
 ) []any {
 	slogAttrs := make([]any, 0, len(attrs)+2)
 
-	// request_id を context から吸い上げる
+	// request_id を context から取得する。
 	if rid, ok := requestid.FromContext(ctx); ok {
 		slogAttrs = append(slogAttrs, slog.String("request_id", rid))
 	}

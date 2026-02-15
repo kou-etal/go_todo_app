@@ -3,17 +3,22 @@ package update
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/kou-etal/go_todo_app/internal/clock"
+	taskevent "github.com/kou-etal/go_todo_app/internal/domain/event"
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
+	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
+	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 )
 
 type Usecase struct {
-	repo  dtask.TaskRepository
+	tx    usetx.Runner[usetx.TaskEventDeps]
 	clock clock.Clocker
 }
 
-func New(repo dtask.TaskRepository, clock clock.Clocker) *Usecase {
-	return &Usecase{repo: repo, clock: clock}
+func New(tx usetx.Runner[usetx.TaskEventDeps], clock clock.Clocker) *Usecase {
+	return &Usecase{tx: tx, clock: clock}
 }
 func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 
@@ -28,47 +33,81 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	t, err := u.repo.FindByID(ctx, id)
-	if err != nil {
-		return Result{}, err
-	}
-	//sqlでも確認するがこっちでも調べる。楽観ロック
-	if t.Version() != cmd.Version {
-		//両方uint
-		return Result{}, dtask.ErrConflict
-	}
-	now := u.clock.Now()
 
+	now := u.clock.Now()
+	userID := user.UserID("tmp") //認証完成したらctxから取る
+
+	reqID, ok := requestid.FromContext(ctx)
+	if !ok || reqID == "" {
+		reqID = uuid.NewString()
+	}
+
+	// どのフィールドが更新されたかを記録
+	var fields []taskevent.UpdatedFields
 	if cmd.Title != nil {
-		title, err := dtask.NewTaskTitle(*cmd.Title) //ポインタ忘れがち
-		if err != nil {
-			return Result{}, err
-		}
-		t.ChangeTitle(title, now) //更新系ヘルパーはdomainで定義
+		fields = append(fields, taskevent.FieldTitle)
 	}
 	if cmd.Description != nil {
-		desc, err := dtask.NewTaskDescription(*cmd.Description)
-		if err != nil {
-			return Result{}, err
-		}
-		t.ChangeDescription(desc, now)
+		fields = append(fields, taskevent.FieldDescription)
 	}
 	if cmd.DueDate != nil {
-		opt, err := normalizeDueOption(*cmd.DueDate)
-		if err != nil {
-			return Result{}, err
-		}
-		due, err := dtask.NewDueDateFromOption(now, opt)
-		if err != nil {
-			return Result{}, err
-		}
-		t.ChangeDueDate(due, now)
+		fields = append(fields, taskevent.FieldDueDate)
 	}
-	if err := u.repo.Update(ctx, t); err != nil {
+
+	event := taskevent.NewUpdatedEvent(
+		userID, id, taskevent.RequestID(reqID), now,
+		taskevent.UpdatedPayload{Fields: fields},
+	)
+
+	if err := u.tx.WithinTx(ctx, func(ctx context.Context, deps usetx.TaskEventDeps) error {
+		t, err := deps.TaskRepo().FindByID(ctx, id)
+		if err != nil {
+			return err
+		}
+		//sqlでも確認するがこっちでも調べる。楽観ロック
+		if t.Version() != cmd.Version {
+			//両方uint
+			return dtask.ErrConflict
+		}
+
+		if cmd.Title != nil {
+			title, err := dtask.NewTaskTitle(*cmd.Title) //ポインタ忘れがち
+			if err != nil {
+				return err
+			}
+			t.ChangeTitle(title, now) //更新系ヘルパーはdomainで定義
+		}
+		if cmd.Description != nil {
+			desc, err := dtask.NewTaskDescription(*cmd.Description)
+			if err != nil {
+				return err
+			}
+			t.ChangeDescription(desc, now)
+		}
+		if cmd.DueDate != nil {
+			opt, err := normalizeDueOption(*cmd.DueDate)
+			if err != nil {
+				return err
+			}
+			due, err := dtask.NewDueDateFromOption(now, opt)
+			if err != nil {
+				return err
+			}
+			t.ChangeDueDate(due, now)
+		}
+		if err := deps.TaskRepo().Update(ctx, t); err != nil {
+			return err
+		}
+		if err := deps.TaskEventRepo().Insert(ctx, event); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return Result{}, err
 	}
+
 	return Result{
-		ID: t.ID().Value(),
+		ID: id.Value(),
 		//TODO:versionも返すべき。その場合repoに+の責務を寄せてるから更新後selectが必須。
 	}, nil
 }

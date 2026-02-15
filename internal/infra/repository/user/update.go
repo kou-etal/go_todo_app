@@ -42,7 +42,7 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("userrepo mark email verified rowsaffected: %w", err)
 	}
-
+	//ここでra==0せずにraだけ返してusecaseで分類する設計もあり。
 	if ra == 0 {
 		//すでに更新されてる、そもそも存在しない
 		//TODO:notfoundか楽観ロック分類するならばロジック記述

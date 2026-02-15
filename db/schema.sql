@@ -17,6 +17,7 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ユーザー';
 --TODO:CHAR(36)はインデックス重い。CHAR(26)ULIDやBINARY(16)も検討
 CREATE TABLE `task`--これtasksのほうがいい
 (
+
     `id`          CHAR(36) NOT NULL COMMENT 'タスクの識別子',
     `user_id` CHAR(36) NOT NULL COMMENT '所有者ユーザーID(UUID)',
     `title`       VARCHAR(20) NOT NULL COMMENT 'タスクのタイトル',
@@ -61,18 +62,44 @@ CREATE TABLE `email_verification_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='メール認証トークン';
 
 CREATE TABLE `task_events` (
-  `id`             CHAR(36)        NOT NULL COMMENT 'イベントID（UUID）',
+  `id`               CHAR(36)        NOT NULL COMMENT 'イベントID（UUID）',
+  `user_id`          CHAR(36)        NOT NULL COMMENT '操作ユーザーID',
+  `task_id`          CHAR(36)        NOT NULL COMMENT '対象タスクID',
+  `request_id`       CHAR(36)        NOT NULL COMMENT 'リクエストID（トレーシング用）',
+  `event_type`       VARCHAR(20)     NOT NULL COMMENT 'イベント種別（created/updated/deleted）',
+  `occurred_at`      DATETIME(6)     NOT NULL COMMENT 'イベント発生日時',
+  `emitted_at`       DATETIME(6)     NULL     COMMENT '外部配信日時（未配信ならNULL）',
+  `schema_version`   INT UNSIGNED    NOT NULL COMMENT 'ペイロードのスキーマバージョン',
+  `payload`          JSON            NOT NULL COMMENT 'イベントペイロード',
+  `next_attempt_at`  DATETIME(6)     NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+    COMMENT 'リトライ可能時刻。初回は即時',
+  `attempt_count`    INT UNSIGNED    NOT NULL DEFAULT 0
+    COMMENT '試行回数',
+  `lease_owner`      VARCHAR(255)    NULL
+    COMMENT 'リースを保持するワーカーID',
+  `lease_until`      DATETIME(6)     NULL
+    COMMENT 'リース有効期限',
+  `claimed_at`       DATETIME(6)     NULL
+    COMMENT 'claim した時刻',
+
+  PRIMARY KEY (`id`),
+  KEY `idx_task_events_emitted` (`emitted_at`),
+  KEY `idx_task_events_claimable` (`emitted_at`, `next_attempt_at`, `lease_until`),
+  CONSTRAINT `fk_task_events_task_id`
+    FOREIGN KEY (`task_id`) REFERENCES `task` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='タスクイベント（Outbox）';
+
+CREATE TABLE `task_events_dlq` (
+  `id`             CHAR(36)        NOT NULL COMMENT '元イベントID',
   `user_id`        CHAR(36)        NOT NULL COMMENT '操作ユーザーID',
   `task_id`        CHAR(36)        NOT NULL COMMENT '対象タスクID',
   `request_id`     CHAR(36)        NOT NULL COMMENT 'リクエストID（トレーシング用）',
   `event_type`     VARCHAR(20)     NOT NULL COMMENT 'イベント種別（created/updated/deleted）',
   `occurred_at`    DATETIME(6)     NOT NULL COMMENT 'イベント発生日時',
-  `emitted_at`     DATETIME(6)     NULL     COMMENT '外部配信日時（未配信ならNULL）',
   `schema_version` INT UNSIGNED    NOT NULL COMMENT 'ペイロードのスキーマバージョン',
   `payload`        JSON            NOT NULL COMMENT 'イベントペイロード',
-
-  PRIMARY KEY (`id`),
-  KEY `idx_task_events_emitted` (`emitted_at`),
-  CONSTRAINT `fk_task_events_task_id`
-    FOREIGN KEY (`task_id`) REFERENCES `task` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='タスクイベント（Outbox）';
+  `attempt_count`  INT UNSIGNED    NOT NULL COMMENT '最終試行回数',
+  `last_error`     TEXT            NULL     COMMENT '最後のエラーメッセージ',
+  `dead_at`        DATETIME(6)     NOT NULL COMMENT 'DLQ 投入日時',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配信失敗イベント（DLQ）';

@@ -12,6 +12,23 @@ services:
       - .:/app
     ports:
       - "18000:8080"
+    depends_on:
+      - todo-db
+
+  event-worker:
+    build:
+      context: .
+      args:
+        - target=dev
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    command: ["go", "run", "./cmd/event-worker"]
+    depends_on:
+      - todo-db
+      - minio
+
   todo-db:
     image: mysql:8.0.29
     platform: linux/amd64
@@ -23,5 +40,31 @@ services:
       - ./docker/mysql/conf.d:/etc/mysql/conf.d
     ports:
       - "33306:3306"
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  # MinIO 起動後にバケットを自動作成する初期化コンテナ
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 1; done;
+      mc mb --ignore-existing local/task-events;
+      "
+
 volumes:
   todo-db-data:
+  minio-data:
