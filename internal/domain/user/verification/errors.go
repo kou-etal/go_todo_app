@@ -7,5 +7,5 @@ var (
 	ErrEmptyToken     = errors.New("empty token")
 	ErrInvalidID      = errors.New("invalid ID")
 	ErrNotFound       = errors.New("not found")
-	ErrConflict       = errors.New("taskrepo: conflict")
+	ErrConflict       = errors.New("conflict")
 )

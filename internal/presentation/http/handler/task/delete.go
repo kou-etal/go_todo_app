@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 
-	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/logger"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/responder"
 	remove "github.com/kou-etal/go_todo_app/internal/usecase/task/delete"
@@ -65,28 +64,21 @@ func (h *deleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} //usecaseエラー
 	if err := h.uc.Do(ctx, cmd); err != nil {
 		switch {
-		//TODO:エラー設計雑すぎ、そもそもhandlerがdomainのエラー扱わない。usecaseで吸収する。
-		case errors.Is(err, remove.ErrInvalidID),
-			errors.Is(err, remove.ErrInvalidVersion):
-			h.logger.Debug(ctx, "invalid command", nil)
-			//TODO:ここはdebugエラー返さずにfieldとreason返す
-			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
-				Message: "invalid request",
-			})
+		case errors.Is(err, remove.ErrInvalidID):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid id"})
 			return
-
-			//repoで発生したエラー、domainに寄せてる。
-		case errors.Is(err, dtask.ErrConflict):
-			responder.JSON(w, http.StatusConflict, responder.ErrResponse{
-				Message: "conflict",
-			})
+		case errors.Is(err, remove.ErrInvalidVersion):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid version"})
 			return
-
+		case errors.Is(err, remove.ErrNotFound):
+			responder.JSON(w, http.StatusNotFound, responder.ErrResponse{Message: "not found"})
+			return
+		case errors.Is(err, remove.ErrConflict):
+			responder.JSON(w, http.StatusConflict, responder.ErrResponse{Message: "conflict"})
+			return
 		default:
 			h.logger.Error(ctx, "delete task failed", err)
-			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{
-				Message: "internal server error",
-			})
+			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{Message: "internal server error"})
 			return
 		}
 	}

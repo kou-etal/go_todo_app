@@ -8,6 +8,8 @@ import (
 var (
 	ErrInvalidID      = errors.New("invalid id")
 	ErrInvalidVersion = errors.New("invalid version")
+	ErrNotFound       = errors.New("not found")
+	ErrConflict       = errors.New("conflict")
 )
 
 func normalize(cmd Command) (Command, error) {

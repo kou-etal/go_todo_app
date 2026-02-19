@@ -2,6 +2,7 @@ package register
 
 import (
 	"context"
+	"errors"
 
 	"github.com/kou-etal/go_todo_app/internal/clock"
 	duser "github.com/kou-etal/go_todo_app/internal/domain/user"
@@ -43,17 +44,38 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 
 	email, err := duser.NewUserEmail(cmd.Email)
 	if err != nil {
-		return Result{}, err
+		switch {
+		case errors.Is(err, duser.ErrEmailTooLong):
+			return Result{}, ErrEmailTooLong
+		case errors.Is(err, duser.ErrInvalidEmailFormat):
+			return Result{}, ErrInvalidEmailFormat
+		default:
+			return Result{}, err
+		}
 	}
 
 	pass, err := duser.NewUserPasswordFromPlain(cmd.Password, u.passwordHasher)
 	if err != nil {
-		return Result{}, err
+		switch {
+		case errors.Is(err, duser.ErrPasswordTooShort):
+			return Result{}, ErrPasswordTooShort
+		case errors.Is(err, duser.ErrPasswordTooLong):
+			return Result{}, ErrPasswordTooLong
+		case errors.Is(err, duser.ErrPasswordHasLeadingOrTrailingSpace):
+			return Result{}, ErrPasswordHasLeadingOrTrailingSpace
+		default:
+			return Result{}, err
+		}
 	}
 
 	name, err := duser.NewUserName(cmd.UserName)
 	if err != nil {
-		return Result{}, err
+		switch {
+		case errors.Is(err, duser.ErrNameTooLong):
+			return Result{}, ErrNameTooLong
+		default:
+			return Result{}, err
+		}
 	}
 
 	user := duser.NewUser(email, pass, name, now)
@@ -81,6 +103,9 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		return nil
 	})
 	if err != nil {
+		if errors.Is(err, duser.ErrConflict) {
+			return Result{}, ErrConflict
+		}
 		return Result{}, err
 	}
 

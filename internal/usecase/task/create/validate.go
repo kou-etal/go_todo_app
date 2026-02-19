@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	//これはdomainを作る以前の問題。domainに持ち込まない。
-	//エラーの名前抽象的やけど
-	ErrInvalidTitle       = errors.New("invalid title")
-	ErrInvalidDescription = errors.New("invalid description")
+	ErrEmptyTitle         = errors.New("empty title")
+	ErrTitleTooLong       = errors.New("title too long")
+	ErrEmptyDescription   = errors.New("empty description")
+	ErrDescriptionTooLong = errors.New("description too long")
 	ErrInvalidDueOption   = errors.New("invalid due_option")
-) //ここでエラー定義するのどうなん。ファイル作ったほうがいいか
+)
 
 const (
 	//ドメイン20文字制限やけど巨大なデータ防ぐためにここである程度制限する。DOS
@@ -25,15 +25,15 @@ func normalize(cmd Command) (Command, error) {
 	//commandはqueryみたいにhttp query usecase queryにはしない。関数一つでnormaliazation
 	title := strings.TrimSpace(cmd.Title)
 	if title == "" {
-		return Command{}, ErrInvalidTitle
+		return Command{}, ErrEmptyTitle
 	}
 	if len(title) > maxTitleBytes {
-		return Command{}, ErrInvalidTitle
+		return Command{}, ErrTitleTooLong
 	}
 
 	desc := strings.TrimSpace(cmd.Description)
 	if len(desc) > maxDescriptionBytes {
-		return Command{}, ErrInvalidDescription
+		return Command{}, ErrDescriptionTooLong
 	}
 
 	//UTCとtruncateの責務はdomain。http入力、resultは選択肢

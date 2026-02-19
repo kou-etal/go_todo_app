@@ -1,7 +1,6 @@
 package task
 
 import (
-	"errors"
 	"time"
 
 	"github.com/kou-etal/go_todo_app/internal/clock"
@@ -57,9 +56,8 @@ func (t *Task) ChangeDueDate(newDue DueDate, now time.Time) {
 //過去禁止はfactoryで定義
 
 func (t *Task) ChangeStatus(next TaskStatus, now time.Time) error {
-	//TODO:状態遷移ルールが弱い.canChangeStatusではなくここで定義する。
 	if t.status == StatusDone {
-		return errors.New("tmp")
+		return ErrStatusChangeDone
 	}
 
 	t.status = next

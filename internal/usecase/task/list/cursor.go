@@ -23,14 +23,12 @@ func encodeCursor(c dtask.ListCursor) (string, error) {
 func decodeCursor(token string) (dtask.ListCursor, error) {
 	b, err := base64.RawURLEncoding.DecodeString(token)
 	if err != nil {
-		return dtask.ListCursor{}, dtask.ErrInvalidCursor
+		return dtask.ListCursor{}, ErrInvalidCursor
 	}
-	//cursor token は機密でなくてもログに残さない、適当にデータをlogに出力しない。
-	//入力が不正
 
 	var c dtask.ListCursor
 	if err := json.Unmarshal(b, &c); err != nil {
-		return dtask.ListCursor{}, dtask.ErrInvalidCursor
+		return dtask.ListCursor{}, ErrInvalidCursor
 	}
 	return c, nil
 }

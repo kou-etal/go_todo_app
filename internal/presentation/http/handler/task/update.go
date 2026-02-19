@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/logger"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/responder"
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/update"
@@ -90,51 +89,46 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res, err := h.uc.Do(ctx, cmd)
 	if err != nil {
 		switch {
-		//TODO:エラー設計雑すぎ、そもそもhandlerがdomainのエラー扱わない。usecaseで吸収する。
-		case errors.Is(err, update.ErrInvalidID),
-			errors.Is(err, update.ErrInvalidVersion),
-			errors.Is(err, update.ErrNoFieldsToUpdate),
-			errors.Is(err, update.ErrInvalidTitle),
-			errors.Is(err, update.ErrInvalidDescription),
-			errors.Is(err, update.ErrInvalidDueOption):
-			h.logger.Debug(ctx, "invalid command", nil)
-			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
-				Message: "invalid request",
-			})
-			return //usecaseエラー
-			//TODO:ここはdebugエラー返さずにfieldとreason返す
-
-		case errors.Is(err, dtask.ErrEmptyTitle),
-			errors.Is(err, dtask.ErrTitleTooLong),
-			errors.Is(err, dtask.ErrEmptyDescription),
-			errors.Is(err, dtask.ErrDescriptionTooLong),
-			errors.Is(err, dtask.ErrInvalidDueOption):
-			h.logger.Debug(ctx, "domain validation failed", nil)
-			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
-				Message: "invalid request",
-			})
+		case errors.Is(err, update.ErrInvalidID):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid id"})
 			return
-			//TODO:ここはdebugエラー返さずにfieldとreason返す
-		case errors.Is(err, dtask.ErrNotFound):
-			responder.JSON(w, http.StatusNotFound, responder.ErrResponse{
-				Message: "not found",
-			})
+		case errors.Is(err, update.ErrInvalidVersion):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid version"})
 			return
-			//ここはdebug返さない
-		case errors.Is(err, dtask.ErrConflict):
-			responder.JSON(w, http.StatusConflict, responder.ErrResponse{
-				Message: "conflict",
-			})
+		case errors.Is(err, update.ErrNoFieldsToUpdate):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "no fields to update"})
 			return
-			//ここはdebug返さない
+		case errors.Is(err, update.ErrEmptyTitle):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "title"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "title is required"})
+			return
+		case errors.Is(err, update.ErrTitleTooLong):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "title"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "title is too long"})
+			return
+		case errors.Is(err, update.ErrEmptyDescription):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "description"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "description is required"})
+			return
+		case errors.Is(err, update.ErrDescriptionTooLong):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "description"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "description is too long"})
+			return
+		case errors.Is(err, update.ErrInvalidDueOption):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "due_date"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid due_date"})
+			return
+		case errors.Is(err, update.ErrNotFound):
+			responder.JSON(w, http.StatusNotFound, responder.ErrResponse{Message: "not found"})
+			return
+		case errors.Is(err, update.ErrConflict):
+			responder.JSON(w, http.StatusConflict, responder.ErrResponse{Message: "conflict"})
+			return
 		default:
 			h.logger.Error(ctx, "update task failed", err)
-			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{
-				Message: "internal server error",
-			})
+			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{Message: "internal server error"})
 			return
-		} //ここはinternalエラー
-
+		}
 	}
 	responder.JSON(w, http.StatusOK, updateResponse{
 		ID: res.ID,

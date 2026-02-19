@@ -1,9 +1,8 @@
 package remove
 
-//package名 deleteはbuilt inと衝突。
-//そもそも createとか動詞パッケージ名に使うのあまり良くない
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/kou-etal/go_todo_app/internal/clock"
@@ -32,7 +31,7 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) error {
 
 	id, err := dtask.ParseTaskID(cmd.ID)
 	if err != nil {
-		return err
+		return ErrInvalidID
 	}
 
 	now := u.clock.Now()
@@ -65,7 +64,14 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) error {
 		}
 		return nil
 	}); err != nil {
-		return err
+		switch {
+		case errors.Is(err, dtask.ErrNotFound):
+			return ErrNotFound
+		case errors.Is(err, dtask.ErrConflict):
+			return ErrConflict
+		default:
+			return err
+		}
 	}
 
 	return nil

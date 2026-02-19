@@ -6,13 +6,16 @@ import (
 )
 
 var (
-	ErrInvalidID        = errors.New("invalid id")
-	ErrInvalidVersion   = errors.New("invalid version")
-	ErrNoFieldsToUpdate = errors.New("no fields to update")
-
-	ErrInvalidTitle       = errors.New("invalid title")
-	ErrInvalidDescription = errors.New("invalid description")
+	ErrInvalidID          = errors.New("invalid id")
+	ErrInvalidVersion     = errors.New("invalid version")
+	ErrNoFieldsToUpdate   = errors.New("no fields to update")
+	ErrEmptyTitle         = errors.New("empty title")
+	ErrTitleTooLong       = errors.New("title too long")
+	ErrEmptyDescription   = errors.New("empty description")
+	ErrDescriptionTooLong = errors.New("description too long")
 	ErrInvalidDueOption   = errors.New("invalid due_option")
+	ErrNotFound           = errors.New("not found")
+	ErrConflict           = errors.New("conflict")
 )
 
 const (
@@ -48,9 +51,8 @@ func normalize(cmd Command) (Command, error) {
 	if cmd.Title != nil {
 		//title = &strings.TrimSpace(*cmd.Title)これができないから一回tに格納してる。
 		t := strings.TrimSpace(*cmd.Title)
-		if len(t) > maxTitleBytes { //ここは文字数カウントではない。len(t)はbyte。やから大きすぎるデータを弾いてる
-			//これはVOではなくusecase責務
-			return Command{}, ErrInvalidTitle
+		if len(t) > maxTitleBytes {
+			return Command{}, ErrTitleTooLong
 		}
 		title = &t
 	}
@@ -62,7 +64,7 @@ func normalize(cmd Command) (Command, error) {
 	if cmd.Description != nil {
 		d := strings.TrimSpace(*cmd.Description)
 		if len(d) > maxDescriptionBytes {
-			return Command{}, ErrInvalidDescription
+			return Command{}, ErrDescriptionTooLong
 		}
 		desc = &d
 	}

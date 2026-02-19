@@ -199,7 +199,7 @@ func TestDo_versionConflict(t *testing.T) {
 		Version: 2, // mismatch
 		Title:   strPtr("new title"),
 	})
-	if !errors.Is(err, dtask.ErrConflict) {
+	if !errors.Is(err, ErrConflict) {
 		t.Fatalf("err = %v, want ErrConflict", err)
 	}
 	if eventRepo.insertCalled {

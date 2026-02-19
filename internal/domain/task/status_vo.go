@@ -1,7 +1,5 @@
 package task
 
-import "errors"
-
 type TaskStatus string
 
 //statusはdomainのルール。ゆえに宣言がdomain層で可能。簡単に書ける。
@@ -21,7 +19,7 @@ func ParseTaskStatus(v string) (TaskStatus, error) {
 	case string(StatusDone):
 		return StatusDone, nil
 	default:
-		return "", errors.New("tmp")
+		return "", ErrInvalidStatus
 	}
 }
 

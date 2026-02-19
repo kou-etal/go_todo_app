@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/logger"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/responder"
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/list"
@@ -62,27 +61,22 @@ func (h *listHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.uc.Do(ctx, q)
 	if err != nil {
-		//TODO:domainのエラーはusecaseで吸収する
 		switch {
-		case errors.Is(err, dtask.ErrInvalidCursor),
-			errors.Is(err, dtask.ErrInvalidLimit),
-			errors.Is(err, dtask.ErrInvalidSort):
-			h.logger.Debug(ctx, "invalid query", nil)
-			//Attrは可変長引数　0でもok
-			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
-				Message: "invalid query",
-			})
-			//TODO:セキュリティ配慮とクライアント体験のトレードオフ、どこまでエラー返すか考える
-			//入力不正
-			//入力不正系はwrapしないで返すのに。であたかもwrapしてるかのように吸収する。保険
-
+		case errors.Is(err, list.ErrInvalidLimit):
+			h.logger.Debug(ctx, "invalid query", nil, logger.String("field", "limit"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid limit"})
+			return
+		case errors.Is(err, list.ErrInvalidSort):
+			h.logger.Debug(ctx, "invalid query", nil, logger.String("field", "sort"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid sort"})
+			return
+		case errors.Is(err, list.ErrInvalidCursor):
+			h.logger.Debug(ctx, "invalid query", nil, logger.String("field", "cursor"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid cursor"})
 			return
 		default:
-			//プログラムの破綻
 			h.logger.Error(ctx, "list tasks failed", err)
-			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{
-				Message: "internal server error",
-			})
+			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{Message: "internal server error"})
 			return
 		}
 	}

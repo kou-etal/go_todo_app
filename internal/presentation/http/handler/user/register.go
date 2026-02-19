@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	duser "github.com/kou-etal/go_todo_app/internal/domain/user"
 	"github.com/kou-etal/go_todo_app/internal/logger"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/responder"
 	"github.com/kou-etal/go_todo_app/internal/usecase/user/register"
@@ -53,29 +52,36 @@ func (h *RegisterUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	res, err := h.uc.Do(ctx, cmd)
 	if err != nil {
 		switch {
-		//TODO:エラー設計雑すぎ、そもそもhandlerがdomainのエラー扱わない。usecaseで吸収する。
-		// usecaseエラー
-		case errors.Is(err, register.ErrEmptyEmail),
-			errors.Is(err, register.ErrEmptyPassword),
-			errors.Is(err, register.ErrEmptyUserName):
-			h.logger.Debug(ctx, "invalid command", nil)
-			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid request"})
+		case errors.Is(err, register.ErrEmptyEmail):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "email is required"})
 			return
-
-		//domainエラー
-		case errors.Is(err, duser.ErrEmptyEmail),
-			errors.Is(err, duser.ErrEmailTooLong),
-			errors.Is(err, duser.ErrInvalidEmailFormat),
-			errors.Is(err, duser.ErrEmptyPassword),
-			errors.Is(err, duser.ErrPasswordTooShort),
-			errors.Is(err, duser.ErrPasswordTooLong),
-			errors.Is(err, duser.ErrPasswordHasLeadingOrTrailingSpace),
-			errors.Is(err, duser.ErrEmptyName),
-			errors.Is(err, duser.ErrNameTooLong):
-			h.logger.Debug(ctx, "domain validation failed", err)
-			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid request"})
+		case errors.Is(err, register.ErrEmailTooLong):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "email is too long"})
 			return
-
+		case errors.Is(err, register.ErrInvalidEmailFormat):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid email format"})
+			return
+		case errors.Is(err, register.ErrEmptyPassword):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "password is required"})
+			return
+		case errors.Is(err, register.ErrPasswordTooShort):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "password is too short"})
+			return
+		case errors.Is(err, register.ErrPasswordTooLong):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "password is too long"})
+			return
+		case errors.Is(err, register.ErrPasswordHasLeadingOrTrailingSpace):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "password has leading or trailing space"})
+			return
+		case errors.Is(err, register.ErrEmptyUserName):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "user name is required"})
+			return
+		case errors.Is(err, register.ErrNameTooLong):
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "user name is too long"})
+			return
+		case errors.Is(err, register.ErrConflict):
+			responder.JSON(w, http.StatusConflict, responder.ErrResponse{Message: "conflict"})
+			return
 		default:
 			h.logger.Error(ctx, "register user failed", err)
 			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{Message: "internal server error"})

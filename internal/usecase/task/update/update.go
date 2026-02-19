@@ -2,6 +2,7 @@ package update
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/kou-etal/go_todo_app/internal/clock"
@@ -31,7 +32,7 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	}
 	id, err := dtask.ParseTaskID(cmd.ID)
 	if err != nil {
-		return Result{}, err
+		return Result{}, ErrInvalidID
 	}
 
 	now := u.clock.Now()
@@ -103,7 +104,22 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		}
 		return nil
 	}); err != nil {
-		return Result{}, err
+		switch {
+		case errors.Is(err, dtask.ErrNotFound):
+			return Result{}, ErrNotFound
+		case errors.Is(err, dtask.ErrConflict):
+			return Result{}, ErrConflict
+		case errors.Is(err, dtask.ErrEmptyTitle):
+			return Result{}, ErrEmptyTitle
+		case errors.Is(err, dtask.ErrTitleTooLong):
+			return Result{}, ErrTitleTooLong
+		case errors.Is(err, dtask.ErrEmptyDescription):
+			return Result{}, ErrEmptyDescription
+		case errors.Is(err, dtask.ErrDescriptionTooLong):
+			return Result{}, ErrDescriptionTooLong
+		default:
+			return Result{}, err
+		}
 	}
 
 	return Result{
