@@ -38,6 +38,9 @@ type mockRepo struct {
 	moveToDLQCount int
 
 	releaseCount int
+
+	countUnemittedResult int64
+	countUnemittedErr    error
 }
 
 func (m *mockRepo) Claim(ctx context.Context, limit int, now time.Time) ([]ClaimedEvent, error) {
@@ -91,6 +94,12 @@ func (m *mockRepo) MoveToDLQ(ctx context.Context, ids []string, lastError string
 	defer m.mu.Unlock()
 	m.moveToDLQCount++
 	return m.moveToDLQErr
+}
+
+func (m *mockRepo) CountUnemitted(ctx context.Context) (int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.countUnemittedResult, m.countUnemittedErr
 }
 
 // --- mock uploader ---

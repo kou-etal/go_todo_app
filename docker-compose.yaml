@@ -25,6 +25,8 @@ services:
     volumes:
       - .:/app
     command: ["go", "run", "./cmd/event-worker"]
+    ports:
+      - "9090:9090"
     depends_on:
       - todo-db
       - minio
@@ -65,6 +67,35 @@ services:
       mc mb --ignore-existing local/task-events;
       "
 
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: pushgateway
+    ports:
+      - "9091:9091"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+
 volumes:
   todo-db-data:
   minio-data:
+  prometheus-data:
+  grafana-data:

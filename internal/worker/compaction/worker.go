@@ -10,16 +10,18 @@ import (
 )
 
 type Worker struct {
-	storage  ObjectStorage
-	cfg      Config
-	logger   *slog.Logger
+	storage ObjectStorage
+	cfg     Config
+	logger  *slog.Logger
+	metrics *Metrics
 }
 
-func NewWorker(storage ObjectStorage, cfg Config, logger *slog.Logger) *Worker {
+func NewWorker(storage ObjectStorage, cfg Config, logger *slog.Logger, metrics *Metrics) *Worker {
 	return &Worker{
 		storage: storage,
 		cfg:     cfg,
 		logger:  logger,
+		metrics: metrics,
 	}
 }
 
@@ -71,10 +73,11 @@ func (w *Worker) Run(ctx context.Context, target time.Time) error {
 	claimDates := claimDatesForTarget(target, w.cfg.BackfillWindow)
 
 	// 4. raw .jsonl を読み込み
-	events, err := readRawEvents(ctx, w.storage, w.cfg.RawPrefix, claimDates)
+	events, err := readRawEvents(ctx, w.storage, w.cfg.RawPrefix, claimDates, w.metrics)
 	if err != nil {
 		return fmt.Errorf("read raw events: %w", err)
 	}
+	w.metrics.EventsRead.Set(float64(len(events)))
 	if len(events) == 0 {
 		w.logger.Info("no events found, skipping", "claim_date", claimDate)
 		return w.writeDoneMarker(ctx, doneKey)
@@ -82,6 +85,7 @@ func (w *Worker) Run(ctx context.Context, target time.Time) error {
 
 	// 5. dedupe
 	deduped, removed := dedupe(events)
+	w.metrics.EventsDeduped.Set(float64(len(deduped)))
 	w.logger.Info("dedupe done", "total", len(events), "deduped", len(deduped), "removed", removed)
 
 	// 6. occurred_at の day でグルーピング
@@ -90,7 +94,7 @@ func (w *Worker) Run(ctx context.Context, target time.Time) error {
 	// 7. 各グループを Parquet に変換して S3 にアップロード
 	var outputs []compactionOutput
 	for day, dayEvents := range groups {
-		if err := uploadParquet(ctx, w.storage, w.cfg.CompactedPrefix, day, claimDate, dayEvents); err != nil {
+		if err := uploadParquet(ctx, w.storage, w.cfg.CompactedPrefix, day, claimDate, dayEvents, w.metrics); err != nil {
 			return fmt.Errorf("upload parquet day=%s: %w", day, err)
 		}
 		outputs = append(outputs, compactionOutput{
@@ -99,6 +103,7 @@ func (w *Worker) Run(ctx context.Context, target time.Time) error {
 			Count: len(dayEvents),
 		})
 	}
+	w.metrics.ParquetFiles.Set(float64(len(outputs)))
 
 	// 8. compaction manifest を書き込み（成功確定）
 	m := compactionManifest{

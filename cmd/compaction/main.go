@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/push"
+
 	s3infra "github.com/kou-etal/go_todo_app/internal/infra/s3"
 	"github.com/kou-etal/go_todo_app/internal/worker/compaction"
 )
@@ -52,7 +54,30 @@ func run(ctx context.Context) error {
 	cfg.S3Bucket = s3Cfg.Bucket
 	cfg.S3Endpoint = s3Cfg.Endpoint
 
-	logger := slog.Default()
-	w := compaction.NewWorker(storage, cfg, logger)
-	return w.Run(ctx, target)
+	metrics := compaction.NewMetrics()
+	w := compaction.NewWorker(storage, cfg, slog.Default(), metrics)
+
+	runStart := time.Now()
+	runErr := w.Run(ctx, target)
+	metrics.LastRunDuration.Set(time.Since(runStart).Seconds())
+
+	if runErr != nil {
+		metrics.LastRunStatus.Set(0)
+		metrics.LastFailureTimestamp.SetToCurrentTime()
+	} else {
+		metrics.LastRunStatus.Set(1)
+		metrics.LastSuccessTimestamp.SetToCurrentTime()
+	}
+
+	// Pushgateway に push
+	pushURL := os.Getenv("PUSHGATEWAY_URL")
+	if pushURL == "" {
+		pushURL = "http://pushgateway:9091"
+	}
+	pusher := push.New(pushURL, "compaction").Gatherer(metrics.Registry)
+	if err := pusher.Push(); err != nil {
+		log.Printf("pushgateway push failed: %v", err)
+	}
+
+	return runErr
 }

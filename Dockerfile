@@ -19,8 +19,7 @@ COPY --from=deploy-builder /app/app .
 CMD ["./app"]
 
 # ---------------------------------------------------
-FROM golang:1.25-bullseye AS dev
-#FROM golang:1.22-bullseye AS dev
+FROM golang:1.24-bullseye AS dev
 WORKDIR /app
-RUN go install github.com/air-verse/air@latest
+RUN go install github.com/air-verse/air@v1.61.7
 CMD ["air"]

@@ -1,0 +1,134 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "title": "processOnce Duration (p50 / p95 / p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(outbox_process_duration_seconds_bucket[5m]))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, rate(outbox_process_duration_seconds_bucket[5m]))", "legendFormat": "p95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, rate(outbox_process_duration_seconds_bucket[5m]))", "legendFormat": "p99", "refId": "C" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Events Emitted Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "rate(outbox_events_emitted_total[5m])", "legendFormat": "emitted/s", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "title": "Events Retried / DLQ Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "rate(outbox_events_retried_total[5m])", "legendFormat": "retried/s", "refId": "A" },
+        { "expr": "rate(outbox_events_dlq_total[5m])", "legendFormat": "dlq/s", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "title": "Claim Batch Size Distribution",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(outbox_claim_batch_size_bucket[5m]))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, rate(outbox_claim_batch_size_bucket[5m]))", "legendFormat": "p95", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "title": "Upload Duration (data / manifest)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, rate(outbox_upload_data_duration_seconds_bucket[5m]))", "legendFormat": "data p95", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, rate(outbox_upload_manifest_duration_seconds_bucket[5m]))", "legendFormat": "manifest p95", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Event Lag (occurred_at to claim / to emit)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(outbox_event_lag_to_claim_seconds_bucket[5m]))", "legendFormat": "to claim p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, rate(outbox_event_lag_to_claim_seconds_bucket[5m]))", "legendFormat": "to claim p95", "refId": "B" },
+        { "expr": "histogram_quantile(0.50, rate(outbox_event_lag_to_emit_seconds_bucket[5m]))", "legendFormat": "to emit p50", "refId": "C" },
+        { "expr": "histogram_quantile(0.95, rate(outbox_event_lag_to_emit_seconds_bucket[5m]))", "legendFormat": "to emit p95", "refId": "D" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Queue Depth",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "targets": [
+        { "expr": "outbox_queue_depth", "legendFormat": "queue depth", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "title": "Inflight Leased",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "targets": [
+        { "expr": "outbox_inflight_leased", "legendFormat": "inflight", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "title": "Repo Failures by Op",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "targets": [
+        { "expr": "rate(outbox_repo_failures_total[5m])", "legendFormat": "{{op}}", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "title": "Heartbeat Extend Duration / Affected",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, rate(outbox_heartbeat_extend_duration_seconds_bucket[5m]))", "legendFormat": "extend p95", "refId": "A" },
+        { "expr": "histogram_quantile(0.50, rate(outbox_heartbeat_extend_affected_rows_bucket[5m]))", "legendFormat": "affected p50", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Idle Cycles / Heartbeat Lost Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 40 },
+      "targets": [
+        { "expr": "rate(outbox_idle_cycles_total[5m])", "legendFormat": "idle cycles/s", "refId": "A" },
+        { "expr": "rate(outbox_heartbeat_lost_total[5m])", "legendFormat": "heartbeat lost/s", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] }
+    },
+    {
+      "title": "Claim Duration (p50 / p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(outbox_claim_duration_seconds_bucket[5m]))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, rate(outbox_claim_duration_seconds_bucket[5m]))", "legendFormat": "p95", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["outbox"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Outbox Worker",
+  "uid": "outbox-worker"
+}

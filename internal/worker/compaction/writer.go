@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/apache/arrow-go/v18/arrow"
 	"github.com/apache/arrow-go/v18/arrow/array"
@@ -81,14 +82,19 @@ func uploadParquet(
 	occurredDay string,
 	claimDate string,
 	events []Event,
+	metrics *Metrics,
 ) error {
+	writeStart := time.Now()
 	data, err := writeParquet(events)
+	metrics.ParquetWriteDuration.Add(time.Since(writeStart).Seconds())
 	if err != nil {
 		return fmt.Errorf("write parquet for day=%s: %w", occurredDay, err)
 	}
 	key := compactedKey(compactedPrefix, occurredDay, claimDate)
+	uploadStart := time.Now()
 	if err := storage.Upload(ctx, key, bytes.NewReader(data)); err != nil {
 		return fmt.Errorf("upload parquet key=%s: %w", key, err)
 	}
+	metrics.S3UploadDuration.Add(time.Since(uploadStart).Seconds())
 	return nil
 }
