@@ -1,0 +1,124 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "title": "Last Run Status",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "compaction_last_run_status", "legendFormat": "status", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FAILED", "color": "red" }, "1": { "text": "OK", "color": "green" } } }
+          ]
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Last Run Duration",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "compaction_last_run_duration_seconds", "legendFormat": "duration", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Events Read",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "compaction_events_read", "legendFormat": "read", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "title": "Events Deduped",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "expr": "compaction_events_deduped", "legendFormat": "deduped", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "title": "Parquet Files",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 6 },
+      "targets": [
+        { "expr": "compaction_parquet_files", "legendFormat": "files", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "title": "S3 List Duration",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 6 },
+      "targets": [
+        { "expr": "compaction_s3_list_duration_seconds", "legendFormat": "list", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "S3 List Calls / Pages / Objects",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 6 },
+      "targets": [
+        { "expr": "compaction_s3_list_calls", "legendFormat": "calls", "refId": "A" },
+        { "expr": "compaction_s3_list_pages", "legendFormat": "pages", "refId": "B" },
+        { "expr": "compaction_s3_objects_listed", "legendFormat": "objects", "refId": "C" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "title": "S3 Read Duration",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 6 },
+      "targets": [
+        { "expr": "compaction_s3_read_duration_seconds", "legendFormat": "read", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Parquet Write Duration",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "compaction_parquet_write_duration_seconds", "legendFormat": "write", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "S3 Upload Duration",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 12 },
+      "targets": [
+        { "expr": "compaction_s3_upload_duration_seconds", "legendFormat": "upload", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+    },
+    {
+      "title": "Last Success / Failure Timestamps",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        { "expr": "compaction_last_success_timestamp", "legendFormat": "last success", "refId": "A" },
+        { "expr": "compaction_last_failure_timestamp", "legendFormat": "last failure", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "dateTimeAsIso" }, "overrides": [] }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["compaction"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "title": "Compaction Worker",
+  "uid": "compaction-worker"
+}

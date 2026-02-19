@@ -40,6 +40,7 @@ type OutboxRepo interface {
 	MarkEmitted(ctx context.Context, ids []string, leaseOwner string, now time.Time) error
 	MarkRetry(ctx context.Context, ids []string, leaseOwner string, nextAttemptAt time.Time) error
 	MoveToDLQ(ctx context.Context, ids []string, lastError string, now time.Time) error
+	CountUnemitted(ctx context.Context) (int64, error)
 }
 
 // ObjectUploader は S3 互換ストレージへのアップロード抽象。

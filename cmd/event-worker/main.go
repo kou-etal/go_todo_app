@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/kou-etal/go_todo_app/internal/config"
 	"github.com/kou-etal/go_todo_app/internal/infra/db"
@@ -39,7 +43,6 @@ func run(ctx context.Context) error {
 	defer closeDB()
 
 	s3Cfg := s3infra.Config{
-		//os.Getenv は手作業で1個ずつ読む。caarlos0/env はstruct に自動で格納。
 		Bucket:          os.Getenv("S3_BUCKET"),
 		Endpoint:        os.Getenv("S3_ENDPOINT"),
 		Region:          os.Getenv("S3_REGION"),
@@ -57,5 +60,34 @@ func run(ctx context.Context) error {
 	workerCfg := outbox.DefaultConfig()
 
 	w := outbox.NewWorker(repo, uploader, workerCfg, l)
-	return w.Run(ctx)
+
+	// metrics HTTP サーバー
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "9090"
+	}
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+	metricsSrv := &http.Server{Addr: ":" + metricsPort, Handler: mux}
+
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		return w.Run(ctx)
+	})
+
+	eg.Go(func() error {
+		log.Printf("metrics server listening on :%s", metricsPort)
+		if err := metricsSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			return fmt.Errorf("metrics server: %w", err)
+		}
+		return nil
+	})
+
+	eg.Go(func() error {
+		<-ctx.Done()
+		return metricsSrv.Close()
+	})
+
+	return eg.Wait()
 }

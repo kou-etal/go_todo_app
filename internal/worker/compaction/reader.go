@@ -19,11 +19,12 @@ func readRawEvents(
 	//これconfigから取得したらよくない->rawPrefixしか使わないならそれだけ持つ。コードが分かりやすくなる。Explicit Dependency
 	//使うやつだけ与える。
 	claimDates []time.Time, //これは複数。backfilから作る。2/15->2/13,2/14
+	metrics *Metrics,
 ) ([]Event, error) {
 	var allEvents []Event
 
 	for _, date := range claimDates {
-		events, err := readEventsForDate(ctx, storage, rawPrefix, date)
+		events, err := readEventsForDate(ctx, storage, rawPrefix, date, metrics)
 		if err != nil {
 			return nil, fmt.Errorf("read events for %s: %w", date.Format("2006-01-02"), err)
 		}
@@ -38,6 +39,7 @@ func readEventsForDate(
 	storage ObjectStorage,
 	rawPrefix string,
 	date time.Time,
+	metrics *Metrics,
 ) ([]Event, error) {
 	var events []Event
 
@@ -46,7 +48,12 @@ func readEventsForDate(
 			rawPrefix, date.Year(), date.Month(), date.Day(), hour,
 		) //hourで区切ってるから取得もhour単位。
 
+		listStart := time.Now()
 		keys, err := storage.List(ctx, prefix) //Listはkey返す。データは返さない責務。
+		listDur := time.Since(listStart).Seconds()
+		metrics.S3ListDuration.Add(listDur)
+		metrics.S3ListCalls.Add(1)
+		metrics.S3ObjectsListed.Add(float64(len(keys)))
 		if err != nil {
 			return nil, fmt.Errorf("list prefix=%s: %w", prefix, err)
 		}
@@ -55,7 +62,9 @@ func readEventsForDate(
 			if !strings.HasSuffix(key, ".jsonl") {
 				continue
 			}
+			readStart := time.Now()
 			parsed, err := readJSONLFile(ctx, storage, key)
+			metrics.S3ReadDuration.Add(time.Since(readStart).Seconds())
 			if err != nil {
 				return nil, fmt.Errorf("read jsonl key=%s: %w", key, err)
 			}
