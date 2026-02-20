@@ -7,14 +7,11 @@ import (
 	taskevent "github.com/kou-etal/go_todo_app/internal/domain/event"
 )
 
-// append-onlyやからtoEntity使わない。
-
-// ポインタにするの忘れがち
 func toRecord(e *taskevent.TaskEvent) (TaskEventRecord, error) {
-	//marshalがtojson
-	p, err := json.Marshal(e.Payload()) //ここではまだbyte
+
+	p, err := json.Marshal(e.Payload())
 	if err != nil {
-		return TaskEventRecord{}, fmt.Errorf("marshal payload: %w", err) //これは想定外。wrapする。
+		return TaskEventRecord{}, fmt.Errorf("marshal payload: %w", err)
 	}
 	return TaskEventRecord{
 		ID:            e.ID().Value(),
@@ -23,8 +20,8 @@ func toRecord(e *taskevent.TaskEvent) (TaskEventRecord, error) {
 		RequestID:     e.RequestID().Value(),
 		EventType:     e.EventType().Value(),
 		OccurredAt:    e.OccurredAt(),
-		EmittedAt:     nil, //ここはrepo実行の際に定義
+		EmittedAt:     nil,
 		SchemaVersion: 1,
-		Payload:       json.RawMessage(p), //jsonで使いますよ宣言
+		Payload:       json.RawMessage(p),
 	}, nil
 }

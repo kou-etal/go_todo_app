@@ -26,7 +26,7 @@ func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req createRequest
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) //DOS対策。1MB。wに記述。
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
@@ -35,7 +35,7 @@ func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.logger.Debug(
 			ctx,
 			"invalid json body",
-			err, //ここはdebugでエラー返す
+			err,
 		)
 		responder.JSON(
 			w,
@@ -44,8 +44,7 @@ func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	//{ "title": "a" }{ "title": "b" }を防ぐ
-	//&struct{}{}はtype struct a{}  dec.Decode(&a{});
+
 	if err := dec.Decode(&struct{}{}); err != io.EOF {
 		h.logger.Debug(
 			ctx,
@@ -63,8 +62,8 @@ func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cmd := create.Command{
 		Title:       req.Title,
 		Description: req.Description,
-		DueDate:     req.DueDate, //7/14/21/30
-	} //いやでもdtask.dueoption変換の責務をcomandが持たなかったらcommandの意味なくねっていう考え方もある。
+		DueDate:     req.DueDate,
+	}
 	res, err := h.uc.Do(ctx, cmd)
 	if err != nil {
 		switch {
@@ -100,7 +99,7 @@ func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type createRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	DueDate     int    `json:"due_date"` // 7/14/21/30
+	DueDate     int    `json:"due_date"`
 }
 
 type createResponse struct {

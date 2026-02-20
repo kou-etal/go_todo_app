@@ -1,6 +1,5 @@
 package list
 
-//TODO:これはテスト書く価値そこそこある。cursorの仕様は独立して壊れやすいからcursor単体テストはコスパ良い。
 import (
 	"encoding/base64"
 	"encoding/json"
@@ -14,9 +13,7 @@ func encodeCursor(c dtask.ListCursor) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("encode cursor: %w", err)
 	}
-	//これは起こりえない。fail-fastでpanic　or  errorで伝搬
-	//json.Marshal が落ちるのは入力が不正ではないからdtask.ErrInvalidCursorではない
-	//それをErrInvalidCursorでかえすと内部バグを400系に誤分類
+
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 

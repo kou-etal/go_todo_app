@@ -13,11 +13,11 @@ func NewTask(
 	description TaskDescription,
 	dueDate DueDate,
 	now time.Time,
-) *Task { //Entityはコピーされない。ポインタで返す
+) *Task {
 	n := clock.NormalizeTime(now)
 
 	return &Task{
-		id:          NewTaskID(), //IDが欲しいのはdomain層の都合
+		id:          NewTaskID(),
 		userID:      userid,
 		title:       title,
 		description: description,

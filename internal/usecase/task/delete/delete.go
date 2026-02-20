@@ -23,7 +23,7 @@ func New(tx usetx.Runner[usetx.TaskEventDeps], clock clock.Clocker) *Usecase {
 }
 
 func (u *Usecase) Do(ctx context.Context, cmd Command) error {
-	//deleteはresult返さずにステータスメッセージだけ
+
 	cmd, err := normalize(cmd)
 	if err != nil {
 		return err

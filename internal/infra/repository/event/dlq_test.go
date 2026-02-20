@@ -37,7 +37,6 @@ func TestMoveToDLQ_executesInsertThenDelete(t *testing.T) {
 		t.Fatalf("ExecContext call count = %d, want 2 (insert + delete)", len(stub.execCalls))
 	}
 
-	// 1回目: INSERT INTO task_events_dlq
 	insertSQL := stub.execCalls[0].sql
 	if !strings.Contains(insertSQL, "task_events_dlq") {
 		t.Fatalf("first exec should be INSERT into dlq:\n%s", insertSQL)
@@ -46,7 +45,6 @@ func TestMoveToDLQ_executesInsertThenDelete(t *testing.T) {
 		t.Fatalf("first exec missing INSERT:\n%s", insertSQL)
 	}
 
-	// 2回目: DELETE FROM task_events
 	deleteSQL := stub.execCalls[1].sql
 	if !strings.Contains(deleteSQL, "DELETE FROM task_events") {
 		t.Fatalf("second exec should be DELETE from task_events:\n%s", deleteSQL)

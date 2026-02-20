@@ -29,7 +29,7 @@ SET emitted_at = ?,
 WHERE id IN (?)
   AND lease_owner = ?;
 `
-	//claim->始まり。emit->終わり
+
 	query, args, err := sqlx.In(base, now, ids, leaseOwner)
 	if err != nil {
 		return fmt.Errorf("taskevent markemitted expand in: %w", err)
@@ -45,7 +45,7 @@ WHERE id IN (?)
 
 // MarkRetry は配信失敗したイベントの attempt_count をインクリメントし、
 // next_attempt_at をバックオフ値に設定してリースをクリアする。
-// これはclaim.goリース開放とは違う。正常な失敗。
+
 func (r *repository) MarkRetry(
 	ctx context.Context,
 	ids []string,

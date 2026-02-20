@@ -208,9 +208,6 @@ func TestUsecase_Do_Encodedecode_Callrepo(t *testing.T) {
 		t.Fatalf("repo query cursor is nil, want non-nil")
 	}
 
-	/*if repo.gotQuery.cursor != c{
-		t.Fatalf(": %v", err)
-	}*/
 } //TODO:これencode decode含めることによって2つともバグってた場合通る可能性あり。decodeは固有値を持たせて試すべきか
 
 func TestUsecase_Do_nextCursorGenerated(t *testing.T) {
@@ -220,7 +217,7 @@ func TestUsecase_Do_nextCursorGenerated(t *testing.T) {
 		Created:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 		DueIsNull: true,
 		ID:        dtask.NewTaskID(),
-	} //next定義しないとDoはnextcursor作らない。これは出力のcursor
+	}
 
 	repo := &stubRepo{
 		tasks: nil,
@@ -231,12 +228,12 @@ func TestUsecase_Do_nextCursorGenerated(t *testing.T) {
 	res, err := u.Do(context.Background(), Query{
 		Limit:  10,
 		Sort:   "created",
-		Cursor: "", //入力のcursor
+		Cursor: "",
 	})
 	if err != nil {
 		t.Fatalf("Do() unexpected error: %v", err)
 	}
 	if res.NextCursor == "" {
 		t.Fatalf("NextCursor should not be empty when repo returns next")
-	} //cursorの中身まではテストしてない。それはcursor.goのテスト責務
+	}
 }

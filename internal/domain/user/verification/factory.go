@@ -8,10 +8,6 @@ import (
 
 const defaultTokenTTL = 24 * time.Hour
 
-//今までfactoryはerror返さなかったがそれはusecaseで保証しきった値を代入してた
-//今回はgenerate、hashはdomain責務。usecaseでは作れない。errorを返す。
-//それとplainも欲しい。hash voはhashを生成する。そこにplain返す責務持たせるの良くない。factoryで返す。
-
 func NewEmailVerificationToken(
 	userID duser.UserID,
 	hasher TokenHasher,
@@ -19,10 +15,9 @@ func NewEmailVerificationToken(
 	now time.Time,
 ) (*EmailVerificationToken, string, error) {
 
-	n := normalizeTime(now) //時間のnormalizazationはdomain責務
+	n := normalizeTime(now)
 
 	plain, err := gen.Generate()
-	//plain は RandomTokenGeneratorが保証。バリデーションしない。
 
 	if err != nil {
 		return nil, "", err

@@ -1,8 +1,5 @@
 package emailverifyrepo
 
-//insert 新規作成だけで更新しない意味合い。
-//store　更新も含む意味合い。
-//今回はinsert
 import (
 	"context"
 	"fmt"
@@ -28,7 +25,7 @@ INSERT INTO email_verification_tokens (
   :used_at,
   :created_at
 );
-` //全更新はnamedexeccontext
+`
 
 	rec := toRecord(t)
 

@@ -2,8 +2,6 @@ package task
 
 type TaskStatus string
 
-//statusはdomainのルール。ゆえに宣言がdomain層で可能。簡単に書ける。
-//もしstatusがUI都合ならばここで宣言不可、ゆえに境界をpresentation/usecaseに置かなければならない(UI都合をここで受け取れない)。だるい。
 const (
 	StatusTodo  TaskStatus = "todo"
 	StatusDoing TaskStatus = "doing"
@@ -25,4 +23,4 @@ func ParseTaskStatus(v string) (TaskStatus, error) {
 
 func (t TaskStatus) Value() string {
 	return string(t)
-} //これは抽象化、string(t)は表現
+}

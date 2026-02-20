@@ -7,7 +7,4 @@ import (
 
 func isNotFound(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
-} //これ分けるの意味あるか
-//でもこれすることでfindのsql依存がなくなるか
-
-//TODO:エラー伝搬適当すぎる。それぞれ定義してusecaseで吸収か、domainに寄せるか統一しよう
+}

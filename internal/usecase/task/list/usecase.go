@@ -30,8 +30,7 @@ func (u *Usecase) Do(ctx context.Context, q Query) (Result, error) {
 		c, err := decodeCursor(q.Cursor)
 		if err != nil {
 			return Result{}, err
-			//decodecursorの定義側で返してる。
-			//低レベル関数を複数用途で使うときに呼び出し側でエラー定義
+
 		}
 		cursor = &c
 	}
@@ -51,11 +50,9 @@ func (u *Usecase) Do(ctx context.Context, q Query) (Result, error) {
 	for _, t := range tasks {
 		items = append(items, mapTaskToItem(t))
 	}
-	//これただのデータ成形やからテストいらん。
-	// もしmapperが変換だけでなくロジック持ってたり、ここでitemの総数制限とかロジック含んでたらテスト.
 
 	nextCursor := ""
-	//空文字比較は罠
+
 	if next != nil {
 		nextCursor, err = encodeCursor(*next)
 		if err != nil {

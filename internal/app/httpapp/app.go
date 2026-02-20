@@ -1,4 +1,3 @@
-// DI層　app->router->handler->usecase->domain->repoの依存
 package app
 
 import (
@@ -31,11 +30,8 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/usecase/user/register"
 )
 
-// Buildは依存を組み立ててhttp.Handlerとcleanupを返す。
-// mainはserver起動とshutdownだけやればいい。
-// errはmainで受け取ってlogger。build側はあくまでwiring
 func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error) {
-	//mainとapp両方config使うからmainでnew作ってappに与える
+
 	clk := clock.RealClocker{}
 	lg := logger.NewSlog()
 	xdb, closeDB, err := db.NewMySQL(ctx, cfg)
@@ -47,47 +43,29 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 		closeDB()
 	}
 
-	/*ここのの命名は怪しい
-	まず繰り返しをしない、長い名前を避けるは大事
-	taskとrepoはpackage taskにしてrepoをエイリアス、usecaseは行動単位をパッケージにする
-	handlerを省略すべきか
-	*/
 	taskRepo := taskrepo.New(xdb)
-
-	//taskrepo.NewRepositoryはqueryer、これはもともとsqlxが満たしているメソッド
-	//重い抽象ではない軽い抽象
 
 	taskListUC := list.New(taskRepo)
 	taskListHandler := task.NewList(taskListUC, lg)
 
-	//user系
 	makeRegisterDeps := func(q db.QueryerExecer) usetx.RegisterDeps {
 		u := userrepo.NewRepository(q)
 		v := emailverifyrepo.NewRepository(q)
 		return txdeps.NewRegister(u, v)
-	} //これ関数ので返す、db.QueryerExecerは別に格納しない。ここが分かりにくい
-	/*func newRegisterDeps(q db.QueryerExecer) usetx.RegisterDeps {
-	    u := userrepo.NewRepository(q)
-	    v := emailverifyrepo.NewRepository(q)
-	    return txdeps.NewRegister(u, v)
 	}
 
-	var makeTxDeps txrunner.RegisterDepsFactory = newRegisterDeps
-	これを省略した記法　depsの最終DI部分*/
 	beginner := xdb
 
 	txOpts := &sql.TxOptions{
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	}
-	//Isolation := 分離レベル、他のトランザクションがやっている途中のデータをどこまで見えるようにするか.
-	//LevelReadCommittedはcommit済みのデータだけ読める。これはほぼデファクト
-	//ReadOnly:=更新可能かどうか。trueは読み取り専用。動作効率の違い
-	registerRunner := txrunner.New(beginner, txOpts, makeRegisterDeps) //appを経由
+
+	registerRunner := txrunner.New(beginner, txOpts, makeRegisterDeps)
 	passwordHasher := security.NewBcryptHasher(14)
 	tokenGenerator := security.NewRandomTokenGenerator(32)
 	tokenHasher := security.SHA256TokenHasher{}
-	registerUC := register.New( //usecaseに与える
+	registerUC := register.New(
 		registerRunner,
 		clk,
 		passwordHasher,
@@ -122,14 +100,10 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 			Register: userRegisterHandler,
 		},
 	})
-	//middlewareのチェーンはrouter/middlewareに託してもいい
+	//TODO:middlewareチェーンはrouter/middlewareに託す
 	h = middleware.RequestID(h)
 	// h = middleware.Recover(lg)(h)
 	h = middleware.AccessLog(lg)(h)
 
 	return h, cleanup, nil
 }
-
-//repoは永続単位->taskに対する永続はすべてtaskrepo
-//ucはユーザーの行動単位->taskに対するユーザーの操作のそれぞれは分けるべき->ファイル分け
-//handlerはリソースの識別単位->ファイル分け

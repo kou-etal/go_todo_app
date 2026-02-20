@@ -10,13 +10,13 @@ import (
 
 func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 
-	id := dtask.TaskID(r.ID) //TODO:ちゃんとparseidで検証しよう
+	id := dtask.TaskID(r.ID)
 	userID := duser.UserID(r.UserID)
 
 	title, err := dtask.NewTaskTitle(r.Title)
 	if err != nil {
 		return nil, fmt.Errorf("invalid task record id=%s field=title: %w", r.ID, err)
-	} //これはDBがバグってることによるエラーゆえにdomainのエラーは使わずにwrapして返す
+	}
 
 	description, err := dtask.NewTaskDescription(r.Description)
 	if err != nil {
@@ -32,12 +32,6 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid task record id=%s field=dueDate: %w", r.ID, err)
 	}
-	/*ReconstructTaskを作らなければtask := &Task{
-	      id: id,
-	      title: title,
-	      ...
-	  	となりrepoがdomainに関与しすぎる
-	*/
 
 	return dtask.ReconstructTask(
 		id,
@@ -55,7 +49,7 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 func EntityToRecord(t *dtask.Task) *TaskRecord {
 
 	return &TaskRecord{
-		ID:          t.ID().Value(), //これdomainでstringにキャストして返してるのにもっかいstringは冗長。
+		ID:          t.ID().Value(),
 		UserID:      t.UserID().Value(),
 		Title:       t.Title().Value(),
 		Description: t.Description().Value(),
@@ -66,5 +60,3 @@ func EntityToRecord(t *dtask.Task) *TaskRecord {
 		Version:     t.Version(),
 	}
 }
-
-//外から中(record->entity)は疑う。中から外(entity->record)は信用する

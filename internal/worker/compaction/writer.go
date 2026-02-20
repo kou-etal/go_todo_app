@@ -23,7 +23,6 @@ var taskEventSchema = arrow.NewSchema([]arrow.Field{
 	{Name: "payload", Type: arrow.BinaryTypes.String, Nullable: false},
 }, nil)
 
-// writeParquet は events を Parquet バイト列に変換する。
 func writeParquet(events []Event) ([]byte, error) {
 	alloc := memory.NewGoAllocator()
 	bldr := array.NewRecordBuilder(alloc, taskEventSchema)
@@ -66,15 +65,12 @@ func writeParquet(events []Event) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// compactedKey は compacted パーティションの S3 キーを生成する。
-// claim 日ごとに別ファイル → 各 claim 日の compaction が独立して冪等。
 func compactedKey(compactedPrefix string, occurredDay string, claimDate string) string {
 	return fmt.Sprintf("%s/day=%s/from-claims-%s.parquet",
 		compactedPrefix, occurredDay, claimDate,
 	)
 }
 
-// uploadParquet は events を Parquet に変換して S3 にアップロードする。
 func uploadParquet(
 	ctx context.Context,
 	storage ObjectStorage,

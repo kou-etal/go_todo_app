@@ -1,7 +1,5 @@
 package task
 
-//package taskhandlerこれはhandler二重
-
 import (
 	"encoding/json"
 	"errors"
@@ -13,9 +11,6 @@ import (
 	remove "github.com/kou-etal/go_todo_app/internal/usecase/task/delete"
 )
 
-// versionをheaderかbodyどっちに含ませるか議論
-// If-Match(headerに含ませる)方がhttp的に正しい
-// 今回はbodyに含ませる設計
 type deleteHandler struct {
 	uc     *remove.Usecase
 	logger logger.Logger
@@ -31,7 +26,7 @@ func (h *deleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := r.PathValue("id")
 	if id == "" {
-		//ここはDebugなし。別にinternalエラーでもない。再現可能
+
 		responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
 			Message: "invalid id",
 		})
@@ -82,7 +77,7 @@ func (h *deleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	w.WriteHeader(http.StatusNoContent) //bodyなしゆえにresponder.JSON使わない。
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type deleteRequest struct {

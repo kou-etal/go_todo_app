@@ -17,13 +17,10 @@ var (
 	ErrNameTooLong                       = errors.New("name too long")
 	ErrConflict                          = errors.New("conflict")
 )
+
 func normalize(cmd Command) (Command, error) {
 	cmd.Email = strings.TrimSpace(cmd.Email)
 	cmd.UserName = strings.TrimSpace(cmd.UserName)
-
-	//passwordはtrimしない
-	//normalizeとvalidateの違い
-	//passwordはvalidateだけ。
 
 	if cmd.Email == "" {
 		return Command{}, ErrEmptyEmail

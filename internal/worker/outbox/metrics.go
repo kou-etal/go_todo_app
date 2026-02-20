@@ -3,8 +3,6 @@ package outbox
 import "github.com/prometheus/client_golang/prometheus"
 
 var (
-	// Histogram
-
 	outboxProcessDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name: "outbox_process_duration_seconds",
 		Help: "processOnce 1サイクルの所要時間",

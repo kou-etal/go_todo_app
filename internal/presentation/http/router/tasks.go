@@ -2,8 +2,6 @@ package router
 
 import "net/http"
 
-//共有しないから大文字ではない
-//t.List.ServeHTTP(w, r)を返す
 func tasksHandler(t TaskDeps) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -19,7 +17,7 @@ func tasksHandler(t TaskDeps) http.Handler {
 
 func taskHandler(t TaskDeps) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//idの抽出はhandlerに寄せてる
+
 		switch r.Method {
 		case http.MethodPatch:
 			t.Update.ServeHTTP(w, r)
@@ -30,5 +28,3 @@ func taskHandler(t TaskDeps) http.Handler {
 		}
 	})
 }
-
-//REST的にはtasksCollection、tasksItemでもいいがこれはわかりにくい。

@@ -1,7 +1,5 @@
 package create
 
-//ビジネスロジックで扱わない異常を省く
-
 import (
 	"errors"
 	"strings"
@@ -22,7 +20,7 @@ const (
 )
 
 func normalize(cmd Command) (Command, error) {
-	//commandはqueryみたいにhttp query usecase queryにはしない。関数一つでnormaliazation
+
 	title := strings.TrimSpace(cmd.Title)
 	if title == "" {
 		return Command{}, ErrEmptyTitle
@@ -36,7 +34,6 @@ func normalize(cmd Command) (Command, error) {
 		return Command{}, ErrDescriptionTooLong
 	}
 
-	//UTCとtruncateの責務はdomain。http入力、resultは選択肢
 	if !isValidDueOption(cmd.DueDate) {
 		return Command{}, ErrInvalidDueOption
 	}
@@ -56,36 +53,3 @@ func isValidDueOption(d int) bool {
 		return false
 	}
 }
-
-/*
-func NewDueOption(t int) (dtask.DueOption, error) {
-	switch t {
-	case 7:
-		return dtask.Due7Days, nil
-	case 14:
-		return dtask.Due14Days, nil
-	case 21:
-		return dtask.Due21Days, nil
-	case 30:
-		return dtask.Due30Days, nil
-	default:
-		return 0, ErrInvalidDueOption //これって0で返していいん
-	}
-
-}*/
-
-/*
-関数にしなかった場合何もしないswitch caseを書くことになる。
-due :=cmd.DueOption
-	switch due {
-	case dtask.Due7Days, dtask.Due14Days, dtask.Due21Days, dtask.Due30Days:
-
-	default:
-		return Command{}, ErrInvalidDueOption
-	}
-
-	return Command{
-		Title:       title,
-		Description: desc,
-		DueOption:   due,
-	}, nil*/

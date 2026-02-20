@@ -16,7 +16,6 @@ func toEntity(r EmailVerificationTokenRecord) (*dverify.EmailVerificationToken, 
 			r.ID, err,
 		)
 	}
-	//これdomain横断するのどうなん。verificationにもparseuserid作ってそれ使う。そこまでしなあかんか。
 	userID, err := duser.ParseUserID(r.UserID)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -24,7 +23,7 @@ func toEntity(r EmailVerificationTokenRecord) (*dverify.EmailVerificationToken, 
 			r.ID, err,
 		)
 	}
-	//token_hashはログに出さない
+
 	tokenHash, err := dverify.ReconstructTokenHash(r.TokenHash)
 	if err != nil {
 		return nil, fmt.Errorf(

@@ -27,7 +27,7 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := r.PathValue("id")
 	if id == "" {
-		//ここはDebugなし。別にinternalエラーでもない。再現可能
+
 		responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
 			Message: "invalid id",
 		})
@@ -44,7 +44,7 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.logger.Debug(
 			ctx,
 			"invalid json body",
-			err, //ここはdebugでエラー返す
+			err,
 		)
 		responder.JSON(
 			w,
@@ -53,8 +53,7 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	//{ "title": "a" }{ "title": "b" }を防ぐ
-	//&struct{}{}はtype struct a{}  dec.Decode(&a{});
+
 	if err := dec.Decode(&struct{}{}); err != io.EOF {
 		h.logger.Debug(
 			ctx,
@@ -82,9 +81,8 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Title:       req.Title,
 		Description: req.Description,
 		DueDate:     req.DueDate,
-	} //なしはnil
+	}
 	//TODO:listでversion返す
-	//commandへ完全raw data送るわけではない。id,versionないとかおかしすぎるやつはhandlerで弾く
 
 	res, err := h.uc.Do(ctx, cmd)
 	if err != nil {
@@ -137,12 +135,11 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type updateRequest struct {
 	Version     uint64  `json:"version"`
-	Title       *string `json:"title,omitempty"` //0とnilを分離
+	Title       *string `json:"title,omitempty"`
 	Description *string `json:"description,omitempty"`
-	DueDate     *int    `json:"due_date,omitempty"` //jsonはjs onlyでもない限りsnake_case
+	DueDate     *int    `json:"due_date,omitempty"`
 }
 
-// 今の更新の設計はpatch系。変わらない分は更新しない。put系と比べて意味ない更新が起こらないメリット。
 type updateResponse struct {
 	ID string `json:"id"`
 	//TODO:version返す

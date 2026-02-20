@@ -5,5 +5,5 @@ import (
 )
 
 type TaskEventRepository interface {
-	Insert(ctx context.Context, e *TaskEvent) error //循環importのミス
+	Insert(ctx context.Context, e *TaskEvent) error
 }

@@ -29,10 +29,10 @@ func NewMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, func(), error)
 		return nil, func() { _ = db.Close() }, err
 	}
 	xdb := sqlx.NewDb(db, "mysql")
-	//適当　tmp　学習用メモ、これらの定義をmainでするとmainが汚れてアンチパターン
+
 	xdb.SetMaxOpenConns(25)
 	xdb.SetMaxIdleConns(25)
 	xdb.SetConnMaxLifetime(5 * time.Minute)
 	return xdb, func() { _ = xdb.Close() }, nil
-	//学習用メモ、main側でDBの終わりを決めたいからxdb.Close()返す
+
 }

@@ -37,7 +37,6 @@ func TestResponseRecorder_defaultStatus200(t *testing.T) {
 	w := httptest.NewRecorder()
 	rec := &responseRecorder{w: w, statusCode: http.StatusOK}
 
-	// Write without calling WriteHeader
 	body := []byte("hello")
 	_, err := rec.Write(body)
 	if err != nil {
@@ -59,7 +58,7 @@ func TestResponseRecorder_doubleWriteHeaderIgnored(t *testing.T) {
 	rec := &responseRecorder{w: w, statusCode: http.StatusOK}
 
 	rec.WriteHeader(http.StatusCreated)
-	rec.WriteHeader(http.StatusNotFound) // should be ignored
+	rec.WriteHeader(http.StatusNotFound)
 
 	if rec.statusCode != http.StatusCreated {
 		t.Fatalf("statusCode = %d, want %d (second WriteHeader should be ignored)", rec.statusCode, http.StatusCreated)

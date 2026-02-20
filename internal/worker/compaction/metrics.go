@@ -2,13 +2,10 @@ package compaction
 
 import "github.com/prometheus/client_golang/prometheus"
 
-// Metrics は compaction ワーカーのメトリクスを保持する。
-// Pushgateway 用に専用 Registry を使う（デフォルト registry と分離）。
-// バッチジョブなので全て Gauge（Histogram は1日1回では意味がない）。
 type Metrics struct {
 	LastSuccessTimestamp prometheus.Gauge
 	LastFailureTimestamp prometheus.Gauge
-	LastRunStatus        prometheus.Gauge // 1=成功, 0=失敗
+	LastRunStatus        prometheus.Gauge
 	LastRunDuration      prometheus.Gauge
 	EventsRead           prometheus.Gauge
 	EventsDeduped        prometheus.Gauge

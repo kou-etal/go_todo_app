@@ -8,7 +8,7 @@ import (
 )
 
 func (r *repository) Insert(ctx context.Context, e *dtaskevent.TaskEvent) error {
-	//emittedはnullで消費されたらmarkする。
+
 	const q = `
 INSERT INTO task_events (
   id, user_id, task_id, request_id,

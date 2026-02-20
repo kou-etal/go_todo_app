@@ -52,28 +52,23 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	}
 	now := u.clock.Now()
 	dueoption, err := normalizeDueOption(cmd.DueDate)
-	//int->Dueoption。これをhandlerでやってusecaseはdtask.dueoptionにすべきか議論
+
 	if err != nil {
 		return Result{}, err
 	}
 	due, err := dtask.NewDueDateFromOption(now, dueoption)
-	//usecaseがclockでnow取得する責務にしてるから一貫させるためにここでもnowを与える。
-	//でもこれの場合usecaseがdomainに関与しすぎてるっていう考え方もある。
-	//結局はdomainを変えたらusecaseでの与え方も変えなければならない設計が良くない。それが密に結合してるの意味。
-	//これは別にdomain変えても被害なしやからいい。
+
 	if err != nil {
 		return Result{}, err
 	}
 	userID := user.UserID("tmp") //ここは認証が完成したらuseridをctxから取る
 	t := dtask.NewTask(userID, title, desc, due, now)
-	//task_id発行はdomainに寄せてるからt.IDで取得する
-	//eventType, err := taskevent.ParseEventType("created") parseはinfraで使うようやからここで使うとダサい
-	reqID, ok := requestid.FromContext(ctx) //これerrでなくok受け取り
+
+	reqID, ok := requestid.FromContext(ctx)
 	if !ok || reqID == "" {
 		reqID = uuid.NewString()
 	}
 
-	//teskevent.RequestID(reqID)これやっていいんや。
 	event := taskevent.NewCreatedEvent(
 		userID, t.ID(), taskevent.RequestID(reqID), now, taskevent.CreatedPayload{},
 	)
@@ -94,7 +89,7 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 }
 
 func normalizeDueOption(t int) (dtask.DueOption, error) {
-	//これ大文字にすると共有になるNormalizeDueOption
+
 	switch t {
 	case 7:
 		return dtask.Due7Days, nil
@@ -105,7 +100,7 @@ func normalizeDueOption(t int) (dtask.DueOption, error) {
 	case 30:
 		return dtask.Due30Days, nil
 	default:
-		return 0, ErrInvalidDueOption //これって0で返していいん
-	} //これはdomainに置くのはよくない。7,14,21,30っていう外部出力に依存してる。
+		return 0, ErrInvalidDueOption
+	}
 
 }

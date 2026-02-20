@@ -1,7 +1,5 @@
 package task
 
-//これは中規模ならpackage handlerで統一してもいい
-
 import (
 	"errors"
 	"net/http"
@@ -12,24 +10,11 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/list"
 )
 
-/*handlerのテストは薄いから実務ではinterface経由しないこと多い
-type ListTasksUsecase interface {
-	Execute(ctx context.Context, q list.Query) (list.Result, error)
-}
-type ListTasksHandler struct {
-	uc ListTasksUsecase
-}*/
-// internal/presentation/http/handler/task/list.go
-
-// type ListTasksHandler struct { これtaskは繰り返しになる
-// これhandlerのstructはexportしないから大文字じゃなくていい
-// usecaseは今の設計の場合interfaceおいてないから具体依存。ゆえにstruct大文字でexport
 type listHandler struct {
 	uc     *list.Usecase
 	logger logger.Logger
 }
 
-// NewListTasksHandlerではない
 func NewList(uc *list.Usecase, lg logger.Logger) *listHandler {
 	return &listHandler{
 		uc:     uc,
@@ -48,12 +33,12 @@ func (h *listHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if v := qp.Get("limit"); v != "" {
 		limit, err := strconv.Atoi(v)
 		if err != nil {
-			//4xxはログ欲しければDebugに落とす。機密注意。
+
 			h.logger.Debug(ctx, "invalid limit", nil, logger.String("limit", v))
 			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
 				Message: "invalid limit",
 			})
-			//入力不正
+
 			return
 		}
 		q.Limit = limit
@@ -86,7 +71,6 @@ func (h *listHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	responder.JSON(w, http.StatusOK, out)
 }
 
-// これどこに置こうか
 type listResponse struct {
 	Items      []listItem `json:"items"`
 	NextCursor string     `json:"next_cursor,omitempty"`
@@ -100,7 +84,6 @@ type listItem struct {
 	DueDate     *string `json:"due_date,omitempty"`
 }
 
-// entity->result->http
 func toHTTPListResponse(res list.Result) listResponse {
 	items := make([]listItem, 0, len(res.Items))
 	for _, it := range res.Items {
@@ -125,5 +108,3 @@ func toHTTPListResponse(res list.Result) listResponse {
 }
 
 const timeRFC3339 = "2006-01-02T15:04:05Z07:00"
-
-//responderは一つで統一(writeerr作らない)

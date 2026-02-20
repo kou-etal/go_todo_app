@@ -7,13 +7,8 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
-// aggregate:=単体でフィールド変えられたくない。ルールの強さ。ルールを破られると壊れる。テーブル単位で考える。
-// TaskはstatusやdueDateに遷移ルールあり、ゆえにaggregate
-// ゆえに勝手にどこからでもフィールド変えられたくないから更新系をChangeでレシーバにする。
-// userprofileとかは別に強いルールない。aggregateじゃないこと多い。
-// 何でもかんでもaggregateにしてchangeメソッド作ると良くない。
 type Task struct {
-	id          TaskID //学習用メモ　ここでDBとのマッピング定義するとdomainにDB都合入って良くない。
+	id          TaskID
 	userID      user.UserID
 	title       TaskTitle
 	description TaskDescription
@@ -25,11 +20,6 @@ type Task struct {
 }
 
 type Tasks []*Task
-
-//スライスは参照やからTasks[0].ID、今回の場合Tasks[0].ChangeStatusとかは普通にコピーじゃなくても元も変わる。
-//でもrangeでコピーしたりappendした場合は[]Taskやとコピーになっても元が変わらない。
-//ゆえに[]*Taskを使う
-//TODO:Tasksを定義するならば定義に意味を持たせるようなメソッドをタスクに持たせる。ただ短いからTasksは微妙。
 
 func (t *Task) ID() TaskID                   { return t.id }
 func (t *Task) UserID() user.UserID          { return t.userID }
@@ -52,8 +42,7 @@ func (t *Task) ChangeDescription(newDesc TaskDescription, now time.Time) {
 func (t *Task) ChangeDueDate(newDue DueDate, now time.Time) {
 	t.dueDate = newDue
 	t.updateTime(now)
-} //TODO:遷移ルール定義してもいい
-//過去禁止はfactoryで定義
+}
 
 func (t *Task) ChangeStatus(next TaskStatus, now time.Time) error {
 	if t.status == StatusDone {
@@ -66,12 +55,11 @@ func (t *Task) ChangeStatus(next TaskStatus, now time.Time) error {
 }
 
 func (t *Task) Reschedule(newDue DueDate, now time.Time) {
-	//TODO:これも状態遷移系。
+
 	t.dueDate = newDue
 	t.updateTime(now)
 }
 
-// MarkDoneに意味を持たせるならばchangestatusと分離
 func (t *Task) MarkDone(now time.Time) error {
 	return t.ChangeStatus(StatusDone, now)
 }
@@ -80,17 +68,3 @@ func (t *Task) updateTime(now time.Time) {
 	n := clock.NormalizeTime(now)
 	t.updatedAt = n
 }
-
-// ここでnormalizeTime定義するならばこれがDB都合ではなくドメインルールである理由が必要そうでないならrepo層でnormalize
-// DONE:そう考えるとdomainでnormalizeする意味ってないな
-
-/*func (t *Task) updateTime(now time.Time) {
-	//TODO:versionの操作はrepo層に任せる
-	n := normalizeTime(now)
-	if n.After(t.updatedAt) {
-		t.updatedAt = n
-		t.version++
-	}
-}*/
-//これやとフィールドごとにvesion増えておかしい。
-//repoで更新完了したら+にするべき

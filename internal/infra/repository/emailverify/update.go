@@ -21,20 +21,16 @@ WHERE
   id = :id
   AND used_at IS NULL;
 `
-	//ここ別にAND used_at IS NULL、AND expires_at > now;こうやってすることもできるけどこれはrepoの責務大きくなる。テストしにくい。
-	//ゆえにdomainに責務持たせる。
-	//FOR UPDATEはSELECT文で使う。ここでは使わない。updateはimplicit lock。
-	//select(for update)->有効性確認(usecase)->update->commitのイメージ
-	//AND used_at IS NULLこれで同時回避
+
 	rec := toRecord(t)
 
 	res, err := r.q.NamedExecContext(ctx, q, rec)
 	if err != nil {
 		return fmt.Errorf("emailverifyrepo consume execute: %w", err)
 	}
-	//さらに同時回避
+
 	ra, err := res.RowsAffected()
-	//TODO:ここはちゃんとconflictとnotfound分けるべき
+
 	if err != nil {
 		return fmt.Errorf("emailverifyrepo consume rowsaffected: %w", err)
 	}

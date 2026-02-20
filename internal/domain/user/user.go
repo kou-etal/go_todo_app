@@ -5,15 +5,14 @@ import (
 )
 
 type User struct {
-	//すべて必須。そうでない場合userName *UserName
 	id              UserID
 	email           UserEmail
-	passwordHash    UserPassword //ここではすでにhashやからpasswordよりpasswordHashのほうがいい
+	passwordHash    UserPassword
 	userName        UserName
 	emailVerifiedAt *time.Time
 	createdAt       time.Time
 	updatedAt       time.Time
-	version         uint64 //++、楽観ロックはDB責務
+	version         uint64
 }
 
 func (t *User) ID() UserID                  { return t.id }

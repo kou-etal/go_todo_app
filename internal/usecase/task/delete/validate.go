@@ -13,8 +13,7 @@ var (
 )
 
 func normalize(cmd Command) (Command, error) {
-	//commandはqueryみたいにhttp query usecase queryにはしない。関数一つでnormaliazation
-	//deleteはこれだけ
+
 	if strings.TrimSpace(cmd.ID) == "" {
 		return Command{}, ErrInvalidID
 	}

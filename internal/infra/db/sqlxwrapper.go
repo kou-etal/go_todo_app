@@ -1,6 +1,5 @@
 package db
 
-//抽象層
 import (
 	"context"
 	"database/sql"
@@ -28,7 +27,7 @@ type Queryer interface {
 	GetContext(ctx context.Context, dest interface{}, query string, args ...any) error
 	SelectContext(ctx context.Context, dest interface{}, query string, args ...any) error
 }
-type QueryerExecer interface { //interface作る->型チェック
+type QueryerExecer interface {
 	Queryer
 	Execer
 	Rebind(query string) string

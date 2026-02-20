@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-// 責務が違うからoutboxのeventと分ける。
-// Event は jsonl から読み込んだイベント。reader / deduper / writer 間で共有する。
 type Event struct {
 	ID            string          `json:"id"`
 	UserID        string          `json:"user_id"`
@@ -18,8 +16,7 @@ type Event struct {
 	Payload       json.RawMessage `json:"payload"`
 }
 
-// OccurredDay は occurred_at の日付部分を返す（パーティションキー用）。
 func (e *Event) OccurredDay() string {
 	return e.OccurredAt.UTC().Format("2006-01-02")
-	//Goの記法。YYYY-MM-DDプレースホルダーではなく("2006-01-02")で記述。
+
 }

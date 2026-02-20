@@ -11,8 +11,6 @@ type repository struct {
 
 var _ dtaskevent.TaskEventRepository = (*repository)(nil)
 
-// ワーカー用インターフェースの型チェックは cmd/event-worker で暗黙に行われる
-
 func New(db db.QueryerExecer) *repository {
 	return &repository{
 		q: db,

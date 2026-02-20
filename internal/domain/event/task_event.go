@@ -16,7 +16,7 @@ func (id EventID) Value() string {
 	return string(id)
 }
 
-type EventType string //一回宣言の記法
+type EventType string
 
 const (
 	EventCreated EventType = "created"
@@ -26,7 +26,7 @@ const (
 
 func ParseEventType(v string) (EventType, error) {
 	switch v {
-	case string(EventCreated): //stringに合わせて比べる
+	case string(EventCreated):
 		return EventCreated, nil
 	case string(EventUpdated):
 		return EventUpdated, nil
@@ -42,7 +42,8 @@ func (t EventType) Value() string {
 }
 
 type CreatedPayload struct{} //現時点ではcreatedは何も送らない
-type UpdatedFields string    //これでtypoも防げる。
+type UpdatedFields string
+
 const (
 	FieldTitle       UpdatedFields = "title"
 	FieldDescription UpdatedFields = "description"
@@ -50,12 +51,12 @@ const (
 )
 
 type UpdatedPayload struct {
-	Fields []UpdatedFields //1-3の可変長で受け取りたい。これ公開する必要あり。これstringでとるとtype許す。->型作る。
+	Fields []UpdatedFields
 }
 type DeletedPayload struct {
 	DateLeft int
 }
-type RequestID string //domainはstring使わずに型でとじる原則
+type RequestID string
 
 func (id RequestID) Value() string { return string(id) }
 
@@ -83,10 +84,9 @@ func NewCreatedEvent(
 	taskID task.TaskID,
 	requestID RequestID,
 	now time.Time,
-	payload CreatedPayload, //,忘れるミス
+	payload CreatedPayload,
 ) *TaskEvent {
-	n := clock.NormalizeTime(now) //normalizetimeはinfraからも使いたくなったからutilsに置いた。
-
+	n := clock.NormalizeTime(now)
 	return &TaskEvent{
 		id:         EventID(uuid.New().String()),
 		eventType:  EventCreated,

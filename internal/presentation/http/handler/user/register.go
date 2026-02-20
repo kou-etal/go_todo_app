@@ -98,7 +98,7 @@ type registerRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	UserName string `json:"user_name"`
-} //TODO:あれjsonってsnake_caseかcamelCaseどっちやっけ
+}
 
 type registerResponse struct {
 	ID string `json:"id"`
