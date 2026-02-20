@@ -17,8 +17,8 @@ import (
 
 type mockStorage struct {
 	mu      sync.Mutex
-	objects map[string][]byte // key → content
-	uploads []string          // アップロードされたキーの順序
+	objects map[string][]byte
+	uploads []string
 }
 
 func newMockStorage() *mockStorage {
@@ -63,7 +63,6 @@ func (m *mockStorage) Get(ctx context.Context, key string) (io.ReadCloser, error
 	return io.NopCloser(bytes.NewReader(data)), nil
 }
 
-// putJSONL は mock storage に jsonl ファイルを配置するヘルパー。
 func putJSONL(m *mockStorage, key string, events []Event) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
