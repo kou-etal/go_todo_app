@@ -84,6 +84,21 @@ CREATE TABLE `task_events` (
     FOREIGN KEY (`task_id`) REFERENCES `task` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='タスクイベント（Outbox）';
 
+CREATE TABLE `refresh_tokens` (
+  `id`         CHAR(36)    NOT NULL COMMENT 'トークンID（UUID）',
+  `user_id`    CHAR(36)    NOT NULL COMMENT '対象ユーザーID（UUID）',
+  `token_hash` CHAR(64)    NOT NULL COMMENT 'SHA-256(token) を hex 化したもの',
+  `expires_at` DATETIME(6) NOT NULL COMMENT '有効期限',
+  `revoked_at` DATETIME(6) NULL     COMMENT '失効日時（未失効ならNULL）',
+  `created_at` DATETIME(6) NOT NULL COMMENT '作成日時',
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uix_refresh_token_hash` (`token_hash`),
+  KEY `idx_refresh_user_id` (`user_id`),
+  CONSTRAINT `fk_refresh_tokens_user_id`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='リフレッシュトークン';
+
 CREATE TABLE `task_events_dlq` (
   `id`             CHAR(36)        NOT NULL COMMENT '元イベントID',
   `user_id`        CHAR(36)        NOT NULL COMMENT '操作ユーザーID',

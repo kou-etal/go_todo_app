@@ -15,6 +15,7 @@ var (
 	ErrDescriptionTooLong = errors.New("description too long")
 	ErrInvalidDueOption   = errors.New("invalid due_option")
 	ErrNotFound           = errors.New("not found")
+	ErrForbidden          = errors.New("forbidden")
 	ErrConflict           = errors.New("conflict")
 )
 
@@ -69,6 +70,7 @@ func normalize(cmd Command) (Command, error) {
 	}
 
 	return Command{
+		UserID:      cmd.UserID,
 		ID:          cmd.ID,
 		Version:     cmd.Version,
 		Title:       title,

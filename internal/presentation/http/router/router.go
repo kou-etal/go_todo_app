@@ -5,8 +5,9 @@ import (
 )
 
 type Deps struct {
-	Task TaskDeps
-	User UserDeps
+	Task   TaskDeps
+	User   UserDeps
+	AuthMW func(http.Handler) http.Handler
 }
 
 type TaskDeps struct {
@@ -17,6 +18,8 @@ type TaskDeps struct {
 }
 type UserDeps struct {
 	Register http.Handler
+	Login    http.Handler
+	Refresh  http.Handler
 }
 
 func New(deps Deps) http.Handler {
@@ -24,11 +27,13 @@ func New(deps Deps) http.Handler {
 
 	mux.Handle("/health", http.HandlerFunc(healthHandler))
 
-	mux.Handle("/tasks", tasksHandler(deps.Task))
+	mux.Handle("/tasks", deps.AuthMW(tasksHandler(deps.Task)))
 
-	mux.Handle("/tasks/", taskHandler(deps.Task))
+	mux.Handle("/tasks/", deps.AuthMW(taskHandler(deps.Task)))
 
 	mux.Handle("/users", usersHandler(deps.User))
+	mux.Handle("/users/login", loginHandler(deps.User))
+	mux.Handle("/users/refresh", refreshHandler(deps.User))
 
 	return mux
 }

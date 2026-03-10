@@ -61,7 +61,10 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	userID := user.UserID("tmp") //ここは認証が完成したらuseridをctxから取る
+	userID, err := user.ParseUserID(cmd.UserID)
+	if err != nil {
+		return Result{}, ErrInvalidUserID
+	}
 	t := dtask.NewTask(userID, title, desc, due, now)
 
 	reqID, ok := requestid.FromContext(ctx)

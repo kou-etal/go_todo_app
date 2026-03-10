@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	ErrInvalidUserID = errors.New("invalid user id")
 	ErrInvalidLimit  = errors.New("invalid limit")
 	ErrInvalidSort   = errors.New("invalid sort")
 	ErrInvalidCursor = errors.New("invalid cursor")

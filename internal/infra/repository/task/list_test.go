@@ -106,6 +106,7 @@ func TestRepository_List_defaultLimitAndSort(t *testing.T) {
 	repo := New(qe)
 
 	_, _, err := repo.List(context.Background(), dtask.ListQuery{
+		UserID: "test-user-id",
 		Limit:  50,
 		Sort:   "created",
 		Cursor: nil,
@@ -139,6 +140,7 @@ func TestRepository_List_createdCursor_buildsWhereAndArgs(t *testing.T) {
 	}
 
 	_, _, err := repo.List(context.Background(), dtask.ListQuery{
+		UserID: "test-user-id",
 		Limit:  10,
 		Sort:   dtask.SortCreated,
 		Cursor: cur,
@@ -147,12 +149,12 @@ func TestRepository_List_createdCursor_buildsWhereAndArgs(t *testing.T) {
 		t.Fatalf("List() unexpected error: %v", err)
 	}
 
-	if !strings.Contains(qe.gotSQL, "WHERE (created_at, id) < (?, ?)") {
+	if !strings.Contains(qe.gotSQL, "AND (created_at, id) < (?, ?)") {
 		t.Fatalf("sql missing created cursor where:\n%s", qe.gotSQL)
 	}
 
-	if len(qe.gotArgs) != 3 {
-		t.Fatalf("args len = %d, want 3 (created_at,id,limit)", len(qe.gotArgs))
+	if len(qe.gotArgs) != 4 {
+		t.Fatalf("args len = %d, want 4 (user_id,created_at,id,limit)", len(qe.gotArgs))
 	}
 }
 
@@ -173,6 +175,7 @@ func TestRepository_List_hasNext_trimsAndReturnsNextCursor(t *testing.T) {
 	repo := New(qr)
 
 	tasks, next, err := repo.List(context.Background(), dtask.ListQuery{
+		UserID: "test-user-id",
 		Limit:  2,
 		Sort:   dtask.SortCreated,
 		Cursor: nil,

@@ -89,12 +89,14 @@ func (m mockClocker) Now() time.Time { return m.now }
 
 // --- helper ---
 
+const testUID = "00000000-0000-0000-0000-000000000001"
+
 func testTask(id dtask.TaskID, dueDate time.Time) *dtask.Task {
 	title, _ := dtask.NewTaskTitle("test title")
 	desc, _ := dtask.NewTaskDescription("test desc")
 	due, _ := dtask.NewDueDateFromTime(dueDate)
 	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	return dtask.ReconstructTask(id, user.UserID("u-1"), title, desc, dtask.StatusTodo, due, now, now, 1)
+	return dtask.ReconstructTask(id, user.UserID(testUID), title, desc, dtask.StatusTodo, due, now, now, 1)
 }
 
 // --- tests ---
@@ -113,7 +115,7 @@ func TestDo_happyPath(t *testing.T) {
 	clk := mockClocker{now: now}
 
 	uc := New(runner, clk)
-	err := uc.Do(context.Background(), Command{ID: taskID.Value(), Version: 1})
+	err := uc.Do(context.Background(), Command{UserID: testUID, ID: taskID.Value(), Version: 1})
 	if err != nil {
 		t.Fatalf("Do() error: %v", err)
 	}
@@ -168,7 +170,7 @@ func TestDo_findByIDError(t *testing.T) {
 	clk := mockClocker{now: time.Now()}
 
 	uc := New(runner, clk)
-	err := uc.Do(context.Background(), Command{ID: taskID.Value(), Version: 1})
+	err := uc.Do(context.Background(), Command{UserID: testUID, ID: taskID.Value(), Version: 1})
 	if !errors.Is(err, findErr) {
 		t.Fatalf("err = %v, want %v", err, findErr)
 	}
@@ -194,7 +196,7 @@ func TestDo_deleteError(t *testing.T) {
 	clk := mockClocker{now: now}
 
 	uc := New(runner, clk)
-	err := uc.Do(context.Background(), Command{ID: taskID.Value(), Version: 1})
+	err := uc.Do(context.Background(), Command{UserID: testUID, ID: taskID.Value(), Version: 1})
 	if !errors.Is(err, delErr) {
 		t.Fatalf("err = %v, want %v", err, delErr)
 	}
@@ -217,7 +219,7 @@ func TestDo_insertEventError(t *testing.T) {
 	clk := mockClocker{now: now}
 
 	uc := New(runner, clk)
-	err := uc.Do(context.Background(), Command{ID: taskID.Value(), Version: 1})
+	err := uc.Do(context.Background(), Command{UserID: testUID, ID: taskID.Value(), Version: 1})
 	if !errors.Is(err, insertErr) {
 		t.Fatalf("err = %v, want %v", err, insertErr)
 	}

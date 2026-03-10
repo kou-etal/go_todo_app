@@ -4,6 +4,7 @@ import (
 	dtaskevent "github.com/kou-etal/go_todo_app/internal/domain/event"
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	duser "github.com/kou-etal/go_todo_app/internal/domain/user"
+	drefresh "github.com/kou-etal/go_todo_app/internal/domain/user/refresh"
 	dverify "github.com/kou-etal/go_todo_app/internal/domain/user/verification"
 )
 
@@ -14,4 +15,11 @@ type RegisterDeps interface {
 type TaskEventDeps interface {
 	TaskRepo() dtask.TaskRepository
 	TaskEventRepo() dtaskevent.TaskEventRepository
+}
+type LoginDeps interface {
+	UserRepo() duser.UserRepository
+	RefreshTokenRepo() drefresh.RefreshTokenRepository
+}
+type RefreshDeps interface {
+	RefreshTokenRepo() drefresh.RefreshTokenRepository
 }

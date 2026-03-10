@@ -35,7 +35,10 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	}
 
 	now := u.clock.Now()
-	userID := user.UserID("tmp") //認証完成したらctxから取る
+	userID, err := user.ParseUserID(cmd.UserID)
+	if err != nil {
+		return Result{}, ErrInvalidID
+	}
 
 	reqID, ok := requestid.FromContext(ctx)
 	if !ok || reqID == "" {
@@ -62,6 +65,10 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		t, err := deps.TaskRepo().FindByID(ctx, id)
 		if err != nil {
 			return err
+		}
+
+		if t.UserID() != userID {
+			return dtask.ErrNotFound
 		}
 
 		if t.Version() != cmd.Version {

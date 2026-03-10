@@ -25,6 +25,11 @@ func NewCreate(uc *create.Usecase, lg logger.Logger) *createHandler {
 func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	uid, ok := userIDFromRequest(w, r)
+	if !ok {
+		return
+	}
+
 	var req createRequest
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
@@ -60,6 +65,7 @@ func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmd := create.Command{
+		UserID:      uid.Value(),
 		Title:       req.Title,
 		Description: req.Description,
 		DueDate:     req.DueDate,

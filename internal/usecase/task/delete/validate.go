@@ -22,6 +22,7 @@ func normalize(cmd Command) (Command, error) {
 	}
 
 	return Command{
+		UserID:  cmd.UserID,
 		ID:      cmd.ID,
 		Version: cmd.Version,
 	}, nil

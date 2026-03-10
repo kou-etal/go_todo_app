@@ -66,6 +66,10 @@ type mockUserRepo struct {
 
 func (m *mockUserRepo) Store(_ context.Context, _ *duser.User) error { return m.storeErr }
 
+func (m *mockUserRepo) FindByEmail(_ context.Context, _ duser.UserEmail) (*duser.User, error) {
+	return nil, duser.ErrNotFound
+}
+
 // --- mock email verify repo ---
 
 type mockEmailVerifyRepo struct {

@@ -3,6 +3,8 @@ package task
 import (
 	"context"
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 type ListSort string
@@ -21,6 +23,7 @@ type ListCursor struct {
 }
 
 type ListQuery struct {
+	UserID user.UserID
 	Limit  int
 	Sort   ListSort
 	Cursor *ListCursor

@@ -26,7 +26,13 @@ func (h *listHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	qp := r.URL.Query()
 
+	uid, ok := userIDFromRequest(w, r)
+	if !ok {
+		return
+	}
+
 	var q list.Query
+	q.UserID = uid.Value()
 	q.Sort = qp.Get("sort")
 	q.Cursor = qp.Get("cursor")
 

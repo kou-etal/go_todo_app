@@ -5,13 +5,16 @@ import (
 )
 
 type Config struct {
-	Env        string `env:"TODO_ENV" envDefault:"dev"`
-	Port       int    `env:"PORT" envDefault:"80"`
-	DBHost     string `env:"TODO_DB_HOST" envDefault:"127.0.0.1"`
-	DBPort     int    `env:"TODO_DB_PORT" envDefault:"33306"`
-	DBUser     string `env:"TODO_DB_USER" envDefault:"todo"`
-	DBPassword string `env:"TODO_DB_PASSWORD" envDefault:"todo"`
-	DBName     string `env:"TODO_DB_NAME" envDefault:"todo"`
+	Env             string `env:"TODO_ENV" envDefault:"dev"`
+	Port            int    `env:"PORT" envDefault:"80"`
+	DBHost          string `env:"TODO_DB_HOST" envDefault:"127.0.0.1"`
+	DBPort          int    `env:"TODO_DB_PORT" envDefault:"33306"`
+	DBUser          string `env:"TODO_DB_USER" envDefault:"todo"`
+	DBPassword      string `env:"TODO_DB_PASSWORD" envDefault:"todo"`
+	DBName          string `env:"TODO_DB_NAME" envDefault:"todo"`
+	JWTSecret       string `env:"TODO_JWT_SECRET" envDefault:"dev-secret-change-me"`
+	AccessTokenTTL  int    `env:"TODO_ACCESS_TOKEN_TTL" envDefault:"900"`
+	RefreshTokenTTL int    `env:"TODO_REFRESH_TOKEN_TTL" envDefault:"604800"`
 }
 
 func New() (*Config, error) {

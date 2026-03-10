@@ -1,4 +1,4 @@
-// password reset,session,refresh token,MFA,OAuthとか作るならdomain/でトップレベルドメイン切ってもいい。
+
 package verification
 
 import (
@@ -23,7 +23,7 @@ func (t *EmailVerificationToken) ExpiresAt() time.Time { return t.expiresAt }
 func (t *EmailVerificationToken) UsedAt() *time.Time   { return t.usedAt }
 func (t *EmailVerificationToken) CreatedAt() time.Time { return t.createdAt }
 
-// これは相対の状態遷移ロジック、factoryでもvoでもない。entityに置く。
+
 func (t *EmailVerificationToken) IsExpired(now time.Time) bool {
 	return !now.Before(t.expiresAt)
 }
@@ -44,4 +44,4 @@ func normalizeTime(t time.Time) time.Time {
 	return t.UTC().Truncate(time.Second)
 }
 
-//tokenはライフサイクル短い、更新もされないからchangeメソッド作らない。
+

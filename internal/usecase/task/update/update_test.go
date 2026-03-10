@@ -92,12 +92,14 @@ func (m mockClocker) Now() time.Time { return m.now }
 func strPtr(s string) *string { return &s }
 func intPtr(i int) *int       { return &i }
 
+const testUID = "00000000-0000-0000-0000-000000000001"
+
 func testTask(id dtask.TaskID, version uint64) *dtask.Task {
 	title, _ := dtask.NewTaskTitle("old title")
 	desc, _ := dtask.NewTaskDescription("old desc")
 	due, _ := dtask.NewDueDateFromTime(time.Date(2026, 2, 8, 0, 0, 0, 0, time.UTC))
 	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	return dtask.ReconstructTask(id, user.UserID("u-1"), title, desc, dtask.StatusTodo, due, now, now, version)
+	return dtask.ReconstructTask(id, user.UserID(testUID), title, desc, dtask.StatusTodo, due, now, now, version)
 }
 
 // --- tests ---
@@ -116,6 +118,7 @@ func TestDo_happyPath_titleOnly(t *testing.T) {
 
 	uc := New(runner, clk)
 	result, err := uc.Do(context.Background(), Command{
+		UserID:  testUID,
 		ID:      taskID.Value(),
 		Version: 1,
 		Title:   strPtr("new title"),
@@ -151,6 +154,7 @@ func TestDo_happyPath_allFields(t *testing.T) {
 
 	uc := New(runner, clk)
 	_, err := uc.Do(context.Background(), Command{
+		UserID:      testUID,
 		ID:          taskID.Value(),
 		Version:     1,
 		Title:       strPtr("new title"),
@@ -173,6 +177,7 @@ func TestDo_normalizeError_noFields(t *testing.T) {
 	uc := New(runner, clk)
 
 	_, err := uc.Do(context.Background(), Command{
+		UserID:  testUID,
 		ID:      "some-id",
 		Version: 1,
 	})
@@ -195,6 +200,7 @@ func TestDo_versionConflict(t *testing.T) {
 
 	uc := New(runner, clk)
 	_, err := uc.Do(context.Background(), Command{
+		UserID:  testUID,
 		ID:      taskID.Value(),
 		Version: 2, // mismatch
 		Title:   strPtr("new title"),
@@ -221,6 +227,7 @@ func TestDo_findByIDError(t *testing.T) {
 
 	uc := New(runner, clk)
 	_, err := uc.Do(context.Background(), Command{
+		UserID:  testUID,
 		ID:      taskID.Value(),
 		Version: 1,
 		Title:   strPtr("new title"),
@@ -248,6 +255,7 @@ func TestDo_updateError(t *testing.T) {
 
 	uc := New(runner, clk)
 	_, err := uc.Do(context.Background(), Command{
+		UserID:  testUID,
 		ID:      taskID.Value(),
 		Version: 1,
 		Title:   strPtr("new title"),
@@ -275,6 +283,7 @@ func TestDo_insertEventError(t *testing.T) {
 
 	uc := New(runner, clk)
 	_, err := uc.Do(context.Background(), Command{
+		UserID:  testUID,
 		ID:      taskID.Value(),
 		Version: 1,
 		Title:   strPtr("new title"),

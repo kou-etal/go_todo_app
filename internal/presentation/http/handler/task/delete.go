@@ -24,6 +24,12 @@ func NewDelete(uc *remove.Usecase, lg logger.Logger) *deleteHandler {
 }
 func (h *deleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	uid, ok := userIDFromRequest(w, r)
+	if !ok {
+		return
+	}
+
 	id := r.PathValue("id")
 	if id == "" {
 
@@ -54,9 +60,10 @@ func (h *deleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmd := remove.Command{
+		UserID:  uid.Value(),
 		ID:      id,
 		Version: req.Version,
-	} //usecaseエラー
+	}
 	if err := h.uc.Do(ctx, cmd); err != nil {
 		switch {
 		case errors.Is(err, remove.ErrInvalidID):

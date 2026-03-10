@@ -21,7 +21,7 @@ func newDeleteHandler(taskRepo *mockTaskRepo, eventRepo *mockEventRepo) http.Han
 
 func buildDeleteRequest(t *testing.T, id, body string) *http.Request {
 	t.Helper()
-	req := httptest.NewRequest(http.MethodDelete, "/tasks/"+id, strings.NewReader(body))
+	req := withAuthContext(httptest.NewRequest(http.MethodDelete, "/tasks/"+id, strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
 	return req
@@ -50,7 +50,7 @@ func TestDeleteHandler_emptyPathID(t *testing.T) {
 
 	h := newDeleteHandler(&mockTaskRepo{}, &mockEventRepo{})
 	body := `{"version":1}`
-	req := httptest.NewRequest(http.MethodDelete, "/tasks/", strings.NewReader(body))
+	req := withAuthContext(httptest.NewRequest(http.MethodDelete, "/tasks/", strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
 	// PathValue("id") returns "" because no path value set
 	rec := httptest.NewRecorder()

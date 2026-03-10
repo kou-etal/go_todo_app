@@ -4,6 +4,7 @@ import (
 	"context"
 
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 type Usecase struct {
@@ -15,6 +16,11 @@ func New(repo dtask.TaskRepository) *Usecase {
 }
 
 func (u *Usecase) Do(ctx context.Context, q Query) (Result, error) {
+	userID, err := user.ParseUserID(q.UserID)
+	if err != nil {
+		return Result{}, ErrInvalidUserID
+	}
+
 	limit, err := normalizeLimit(q.Limit)
 	if err != nil {
 		return Result{}, err
@@ -36,6 +42,7 @@ func (u *Usecase) Do(ctx context.Context, q Query) (Result, error) {
 	}
 
 	dq := dtask.ListQuery{
+		UserID: userID,
 		Limit:  limit,
 		Sort:   sort,
 		Cursor: cursor,

@@ -29,19 +29,21 @@ SELECT
   id, title, description, status, due_date,
   created_at, updated_at, version
 FROM task
+WHERE user_id = ?
 `)
+	args = append(args, q.UserID.Value())
 
 	if q.Cursor != nil {
 		switch q.Sort {
 		case dtask.SortCreated:
-			sb.WriteString("WHERE (created_at, id) < (?, ?)\n")
+			sb.WriteString("AND (created_at, id) < (?, ?)\n")
 
 			args = append(args, q.Cursor.Created, q.Cursor.ID.Value())
 
 		case dtask.SortDueDate:
 			if !q.Cursor.DueIsNull {
 
-				sb.WriteString("WHERE (due_is_null, due_date, id) > (?, ?, ?)\n")
+				sb.WriteString("AND (due_is_null, due_date, id) > (?, ?, ?)\n")
 				dueIsNull := 0
 				if q.Cursor.DueIsNull {
 					dueIsNull = 1
@@ -49,7 +51,7 @@ FROM task
 				args = append(args, dueIsNull, q.Cursor.DueDate, q.Cursor.ID.Value())
 
 			} else {
-				sb.WriteString("WHERE (due_date IS NULL AND id > ?)\n")
+				sb.WriteString("AND (due_date IS NULL AND id > ?)\n")
 				args = append(args, q.Cursor.ID.Value())
 			}
 

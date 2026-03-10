@@ -23,7 +23,7 @@ func newUpdateHandler(taskRepo *mockTaskRepo, eventRepo *mockEventRepo) http.Han
 
 func buildUpdateRequest(t *testing.T, id, body string) *http.Request {
 	t.Helper()
-	req := httptest.NewRequest(http.MethodPut, "/tasks/"+id, strings.NewReader(body))
+	req := withAuthContext(httptest.NewRequest(http.MethodPut, "/tasks/"+id, strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
 	return req
@@ -34,7 +34,7 @@ func existingTask() *dtask.Task {
 	title, _ := dtask.NewTaskTitle("old title")
 	desc, _ := dtask.NewTaskDescription("old desc")
 	due, _ := dtask.NewDueDateFromOption(now, dtask.Due7Days)
-	return dtask.NewTask(user.UserID("u1"), title, desc, due, now)
+	return dtask.NewTask(user.UserID(testUserID), title, desc, due, now)
 }
 
 func TestUpdateHandler_happyPath(t *testing.T) {

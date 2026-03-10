@@ -21,7 +21,7 @@ func TestListHandler_happyPath(t *testing.T) {
 	taskRepo := &mockTaskRepo{listTasks: nil, listNext: nil}
 	h := newListHandler(taskRepo)
 
-	req := httptest.NewRequest(http.MethodGet, "/tasks?limit=10&sort=created", nil)
+	req := withAuthContext(httptest.NewRequest(http.MethodGet, "/tasks?limit=10&sort=created", nil))
 	rec := httptest.NewRecorder()
 
 	h.ServeHTTP(rec, req)
@@ -42,7 +42,7 @@ func TestListHandler_invalidLimitNaN(t *testing.T) {
 	t.Parallel()
 
 	h := newListHandler(&mockTaskRepo{})
-	req := httptest.NewRequest(http.MethodGet, "/tasks?limit=abc", nil)
+	req := withAuthContext(httptest.NewRequest(http.MethodGet, "/tasks?limit=abc", nil))
 	rec := httptest.NewRecorder()
 
 	h.ServeHTTP(rec, req)
@@ -61,7 +61,7 @@ func TestListHandler_invalidSort(t *testing.T) {
 	t.Parallel()
 
 	h := newListHandler(&mockTaskRepo{})
-	req := httptest.NewRequest(http.MethodGet, "/tasks?sort=bad_sort", nil)
+	req := withAuthContext(httptest.NewRequest(http.MethodGet, "/tasks?sort=bad_sort", nil))
 	rec := httptest.NewRecorder()
 
 	h.ServeHTTP(rec, req)
@@ -82,7 +82,7 @@ func TestListHandler_internalError(t *testing.T) {
 	taskRepo := &mockTaskRepo{listErr: errors.New("db down")}
 	h := newListHandler(taskRepo)
 
-	req := httptest.NewRequest(http.MethodGet, "/tasks?limit=10&sort=created", nil)
+	req := withAuthContext(httptest.NewRequest(http.MethodGet, "/tasks?limit=10&sort=created", nil))
 	rec := httptest.NewRecorder()
 
 	h.ServeHTTP(rec, req)

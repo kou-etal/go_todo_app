@@ -24,7 +24,7 @@ func TestCreateHandler_happyPath(t *testing.T) {
 
 	h := newCreateHandler(&mockTaskRepo{}, &mockEventRepo{})
 	body := `{"title":"test task","description":"desc","due_date":7}`
-	req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body))
+	req := withAuthContext(httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
@@ -46,7 +46,7 @@ func TestCreateHandler_invalidJSON(t *testing.T) {
 	t.Parallel()
 
 	h := newCreateHandler(&mockTaskRepo{}, &mockEventRepo{})
-	req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader("{invalid"))
+	req := withAuthContext(httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader("{invalid")))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
@@ -67,7 +67,7 @@ func TestCreateHandler_emptyTitle(t *testing.T) {
 
 	h := newCreateHandler(&mockTaskRepo{}, &mockEventRepo{})
 	body := `{"title":"","description":"desc","due_date":7}`
-	req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body))
+	req := withAuthContext(httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
@@ -88,7 +88,7 @@ func TestCreateHandler_invalidDue(t *testing.T) {
 
 	h := newCreateHandler(&mockTaskRepo{}, &mockEventRepo{})
 	body := `{"title":"task","description":"desc","due_date":5}`
-	req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body))
+	req := withAuthContext(httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
@@ -113,7 +113,7 @@ func TestCreateHandler_internalError(t *testing.T) {
 	h := NewCreate(uc, stubLogger{})
 
 	body := `{"title":"task","description":"desc","due_date":7}`
-	req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body))
+	req := withAuthContext(httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body)))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 

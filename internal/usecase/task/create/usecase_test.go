@@ -92,6 +92,7 @@ func TestDo_happyPath(t *testing.T) {
 
 	uc := New(runner, clk)
 	res, err := uc.Do(context.Background(), Command{
+		UserID:      "00000000-0000-0000-0000-000000000001",
 		Title:       "test task",
 		Description: "test desc",
 		DueDate:     7,
@@ -194,6 +195,7 @@ func TestDo_storeError(t *testing.T) {
 
 	uc := New(runner, clk)
 	_, err := uc.Do(context.Background(), Command{
+		UserID:      "00000000-0000-0000-0000-000000000001",
 		Title:       "test task",
 		Description: "test desc",
 		DueDate:     7,
@@ -219,6 +221,7 @@ func TestDo_insertEventError(t *testing.T) {
 
 	uc := New(runner, clk)
 	_, err := uc.Do(context.Background(), Command{
+		UserID:      "00000000-0000-0000-0000-000000000001",
 		Title:       "test task",
 		Description: "test desc",
 		DueDate:     7,

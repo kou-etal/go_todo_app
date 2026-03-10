@@ -3,7 +3,8 @@ package list
 import "time"
 
 type Query struct {
-	Limit int
+	UserID string
+	Limit  int
 
 	Sort   string
 	Cursor string

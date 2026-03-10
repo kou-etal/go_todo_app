@@ -3,14 +3,24 @@ package task
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
+	"github.com/kou-etal/go_todo_app/internal/auth"
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 	"github.com/kou-etal/go_todo_app/internal/logger"
 
 	taskevent "github.com/kou-etal/go_todo_app/internal/domain/event"
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 )
+
+const testUserID = "00000000-0000-0000-0000-000000000001"
+
+func withAuthContext(r *http.Request) *http.Request {
+	ctx := auth.WithUserID(r.Context(), user.UserID(testUserID))
+	return r.WithContext(ctx)
+}
 
 var errInternal = errors.New("internal")
 

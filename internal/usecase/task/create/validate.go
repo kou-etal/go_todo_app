@@ -11,6 +11,7 @@ var (
 	ErrEmptyDescription   = errors.New("empty description")
 	ErrDescriptionTooLong = errors.New("description too long")
 	ErrInvalidDueOption   = errors.New("invalid due_option")
+	ErrInvalidUserID      = errors.New("invalid user id")
 )
 
 const (
@@ -39,6 +40,7 @@ func normalize(cmd Command) (Command, error) {
 	}
 
 	return Command{
+		UserID:      cmd.UserID,
 		Title:       title,
 		Description: desc,
 		DueDate:     cmd.DueDate,

@@ -51,6 +51,7 @@ func TestUsecase_Do_callsRepoWithNormalizedLimit(t *testing.T) {
 
 	//sort/limit/cursor全部成功する値、limit正規化
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  0,
 		Sort:   "created",
 		Cursor: "",
@@ -87,6 +88,7 @@ func TestUsecase_Do_callsRepoWithNormalizedSort(t *testing.T) {
 
 	//sort/limit/cursor全部成功する値、sort正規化
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  5,
 		Sort:   "",
 		Cursor: "",
@@ -120,6 +122,7 @@ func TestUsecase_Do_invalidLimit_doesNotCallRepo(t *testing.T) {
 	u := New(repo)
 
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  -1,
 		Sort:   "created",
 		Cursor: "",
@@ -141,6 +144,7 @@ func TestUsecase_Do_invalidSort_doesNotCallRepo(t *testing.T) {
 	u := New(repo)
 
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  10,
 		Sort:   "___invalid___",
 		Cursor: "",
@@ -162,6 +166,7 @@ func TestUsecase_Do_invalidCursor_doesNotCallRepo(t *testing.T) {
 	u := New(repo)
 
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  10,
 		Sort:   "",
 		Cursor: "broken-cursor-string",
@@ -192,6 +197,7 @@ func TestUsecase_Do_Encodedecode_Callrepo(t *testing.T) {
 	u := New(repo)
 
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  10,
 		Sort:   "created",
 		Cursor: token,
@@ -226,6 +232,7 @@ func TestUsecase_Do_nextCursorGenerated(t *testing.T) {
 	u := New(repo)
 
 	res, err := u.Do(context.Background(), Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  10,
 		Sort:   "created",
 		Cursor: "",

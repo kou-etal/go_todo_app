@@ -25,6 +25,12 @@ func NewUpdate(uc *update.Usecase, lg logger.Logger) *updateHandler {
 
 func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	uid, ok := userIDFromRequest(w, r)
+	if !ok {
+		return
+	}
+
 	id := r.PathValue("id")
 	if id == "" {
 
@@ -76,6 +82,7 @@ func (h *updateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmd := update.Command{
+		UserID:      uid.Value(),
 		ID:          id,
 		Version:     req.Version,
 		Title:       req.Title,

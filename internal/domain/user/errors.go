@@ -14,4 +14,5 @@ var (
 	ErrEmptyName                         = errors.New("name is empty")
 	ErrNameTooLong                       = errors.New("name is too long")
 	ErrConflict                          = errors.New("conflict")
+	ErrNotFound                          = errors.New("user not found")
 )

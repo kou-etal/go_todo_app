@@ -5,14 +5,17 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kou-etal/go_todo_app/internal/app/txdeps"
+	"github.com/kou-etal/go_todo_app/internal/auth"
 	"github.com/kou-etal/go_todo_app/internal/clock"
 	"github.com/kou-etal/go_todo_app/internal/config"
 	"github.com/kou-etal/go_todo_app/internal/infra/db"
 	txrunner "github.com/kou-etal/go_todo_app/internal/infra/db/tx"
 	emailverifyrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/emailverify"
 	taskeventrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/event"
+	refreshrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/refresh"
 	taskrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/task"
 	userrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/user"
 	"github.com/kou-etal/go_todo_app/internal/infra/security"
@@ -27,6 +30,8 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/list"
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/update"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
+	"github.com/kou-etal/go_todo_app/internal/usecase/user/login"
+	userefresh "github.com/kou-etal/go_todo_app/internal/usecase/user/refresh"
 	"github.com/kou-etal/go_todo_app/internal/usecase/user/register"
 )
 
@@ -87,7 +92,49 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 	taskUpdateHandler := task.NewUpdate(taskUpdateUC, lg)
 	taskDeleteHandler := task.NewDelete(taskDeleteUC, lg)
 
+	// JWT
+	jwtManager := auth.NewJWTManager(cfg.JWTSecret, cfg.AccessTokenTTL)
+	refreshTTL := time.Duration(cfg.RefreshTokenTTL) * time.Second
+
+	// Login
+	makeLoginDeps := func(q db.QueryerExecer) usetx.LoginDeps {
+		u := userrepo.NewRepository(q)
+		r := refreshrepo.NewRepository(q)
+		return txdeps.NewLogin(u, r)
+	}
+	loginRunner := txrunner.New(beginner, txOpts, makeLoginDeps)
+	loginUC := login.New(
+		loginRunner,
+		clk,
+		passwordHasher,
+		jwtManager,
+		tokenHasher,
+		tokenGenerator,
+		refreshTTL,
+		cfg.AccessTokenTTL,
+	)
+
+	// Refresh
+	makeRefreshDeps := func(q db.QueryerExecer) usetx.RefreshDeps {
+		r := refreshrepo.NewRepository(q)
+		return txdeps.NewRefresh(r)
+	}
+	refreshRunner := txrunner.New(beginner, txOpts, makeRefreshDeps)
+	refreshUC := userefresh.New(
+		refreshRunner,
+		clk,
+		jwtManager,
+		tokenHasher,
+		tokenGenerator,
+		refreshTTL,
+		cfg.AccessTokenTTL,
+	)
+
 	userRegisterHandler := userhandler.NewRegister(registerUC, lg)
+	userLoginHandler := userhandler.NewLogin(loginUC, lg)
+	userRefreshHandler := userhandler.NewRefresh(refreshUC, lg)
+
+	authMW := middleware.Auth(jwtManager, lg)
 
 	h := router.New(router.Deps{
 		Task: router.TaskDeps{
@@ -98,11 +145,12 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 		},
 		User: router.UserDeps{
 			Register: userRegisterHandler,
+			Login:    userLoginHandler,
+			Refresh:  userRefreshHandler,
 		},
+		AuthMW: authMW,
 	})
-	//TODO:middlewareチェーンはrouter/middlewareに託す
 	h = middleware.RequestID(h)
-	// h = middleware.Recover(lg)(h)
 	h = middleware.AccessLog(lg)(h)
 
 	return h, cleanup, nil
