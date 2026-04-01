@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type slogLogger struct {
@@ -44,10 +45,27 @@ func (s *slogLogger) buildAttrs(
 	err error,
 	attrs ...Attr,
 ) []any {
-	slogAttrs := make([]any, 0, len(attrs)+2)
+	slogAttrs := make([]any, 0, len(attrs)+4)
 
 	if rid, ok := requestid.FromContext(ctx); ok {
 		slogAttrs = append(slogAttrs, slog.String("request_id", rid))
+	}
+	//requestidは自分で埋め込んだがspanidとtraceidはotel sdkは自動で埋める。便利すぎる。
+	/*
+	   スパンを開始するたびに自動生成
+	        ctx, span := otel.Tracer("usecase").Start(ctx, "Create")
+	*/
+	//trace.SpanContextFromContext(ctx);は返り値一つ。
+	if spanid := trace.SpanContextFromContext(ctx); spanid.IsValid() {
+		//SpanContextFromContext(ctx)は読み取り専用。SpanFromContext → Span を操作したい場合
+		//スパンが作られてない ctx を受け取った場合に意味ない trace_id をログに出さない。spanCtx.IsValid
+		/*
+					スパンあり: trace_id=abc123, span_id=def456 → ログに出す
+			  スパンなし: trace_id=000000, span_id=000000 → 出さない
+			  例えばヘルスチェックやバッチ処理でスパンを作ってない ctx あり得る。
+		*/
+		slogAttrs = append(slogAttrs, slog.String("trace_id", spanid.TraceID().String()))
+		slogAttrs = append(slogAttrs, slog.String("span_id", spanid.SpanID().String()))
 	}
 
 	if err != nil {

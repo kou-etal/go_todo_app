@@ -14,6 +14,7 @@ services:
       - "18000:8080"
     depends_on:
       - todo-db
+      - otel-collector
 
   event-worker:
     build:
@@ -82,6 +83,27 @@ services:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./docker/otel-collector/config.yaml:/etc/otelcol/config.yaml
+    ports:
+      - "4318:4318"
+    depends_on:
+      - tempo
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./docker/tempo/tempo.yaml:/etc/tempo.yaml
+      - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -99,3 +121,4 @@ volumes:
   minio-data:
   prometheus-data:
   grafana-data:
+  tempo-data:
