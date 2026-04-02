@@ -11,7 +11,12 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/domain/user"
 	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
+	"go.opentelemetry.io/otel"
+	//usecaseがこれimportするのは可。そもそもこれがotelの想定パターン。
+	//interface作ってDIで受け取るのは過剰。
 )
+
+var tracer = otel.Tracer("usecase/task/create")
 
 type Usecase struct {
 	tx    usetx.Runner[usetx.TaskEventDeps]
@@ -24,6 +29,9 @@ func New(tx usetx.Runner[usetx.TaskEventDeps], clock clock.Clocker) *Usecase {
 
 // mapperは使わない。newtaskを使う
 func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
+	ctx, span := tracer.Start(ctx, "task.create")
+	defer span.End()
+
 	cmd, err := normalize(cmd)
 	if err != nil {
 		return Result{}, err

@@ -6,7 +6,10 @@ import (
 	"fmt"
 
 	"github.com/kou-etal/go_todo_app/internal/infra/db"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("infra/db/tx")
 
 type DepsFactory[D any] func(q db.QueryerExecer) D
 
@@ -28,6 +31,9 @@ func (r *SQLxRunner[D]) WithinTx(
 	ctx context.Context,
 	fn func(ctx context.Context, deps D) error,
 ) (retErr error) {
+	ctx, span := tracer.Start(ctx, "tx.WithinTx")
+	defer span.End()
+
 	//deferで追記するから名前付き戻り値
 	tx, err := r.beginner.BeginTxx(ctx, r.opts)
 	if err != nil {

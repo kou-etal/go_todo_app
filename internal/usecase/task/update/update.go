@@ -11,7 +11,10 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/domain/user"
 	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("usecase/task/update")
 
 type Usecase struct {
 	tx    usetx.Runner[usetx.TaskEventDeps]
@@ -22,6 +25,8 @@ func New(tx usetx.Runner[usetx.TaskEventDeps], clock clock.Clocker) *Usecase {
 	return &Usecase{tx: tx, clock: clock}
 }
 func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
+	ctx, span := tracer.Start(ctx, "task.update")
+	defer span.End()
 
 	cmd, err := normalize(cmd)
 
