@@ -9,6 +9,8 @@ import (
 	drefresh "github.com/kou-etal/go_todo_app/internal/domain/user/refresh"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("usecase/user/refresh")
@@ -53,11 +55,15 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 
 	cmd, err := normalize(cmd)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 
 	hash, err := drefresh.NewTokenHashFromPlain(cmd.RefreshToken, u.refreshHasher)
 	if err != nil {
+		span.RecordError(ErrInvalidRefreshToken)
+		span.SetStatus(codes.Error, ErrInvalidRefreshToken.Error())
 		return Result{}, ErrInvalidRefreshToken
 	}
 
@@ -78,6 +84,8 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		if !old.IsValid(now) {
 			return ErrInvalidRefreshToken
 		}
+
+		span.SetAttributes(attribute.String("user.id", old.UserID().Value()))
 
 		old.Revoke(now)
 		if err := deps.RefreshTokenRepo().Update(ctx, old); err != nil {
@@ -104,8 +112,12 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		return deps.RefreshTokenRepo().Store(ctx, rt)
 	}); err != nil {
 		if errors.Is(err, ErrInvalidRefreshToken) {
+			span.RecordError(ErrInvalidRefreshToken)
+			span.SetStatus(codes.Error, ErrInvalidRefreshToken.Error())
 			return Result{}, ErrInvalidRefreshToken
 		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 

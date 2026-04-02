@@ -10,6 +10,8 @@ import (
 	drefresh "github.com/kou-etal/go_todo_app/internal/domain/user/refresh"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("usecase/user/login")
@@ -57,11 +59,15 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 
 	cmd, err := normalize(cmd)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 
 	email, err := duser.NewUserEmail(cmd.Email)
 	if err != nil {
+		span.RecordError(ErrInvalidCredentials)
+		span.SetStatus(codes.Error, ErrInvalidCredentials.Error())
 		return Result{}, ErrInvalidCredentials
 	}
 
@@ -83,6 +89,8 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 			return ErrInvalidCredentials
 		}
 
+		span.SetAttributes(attribute.String("user.id", usr.ID().Value()))
+
 		accessToken, err = u.tokenGen.GenerateAccessToken(usr.ID().Value())
 		if err != nil {
 			return err
@@ -103,8 +111,12 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		return deps.RefreshTokenRepo().Store(ctx, rt)
 	}); err != nil {
 		if errors.Is(err, ErrInvalidCredentials) {
+			span.RecordError(ErrInvalidCredentials)
+			span.SetStatus(codes.Error, ErrInvalidCredentials.Error())
 			return Result{}, ErrInvalidCredentials
 		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 

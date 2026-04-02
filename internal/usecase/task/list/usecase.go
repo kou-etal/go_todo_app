@@ -6,6 +6,8 @@ import (
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/domain/user"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("usecase/task/list")
@@ -24,16 +26,24 @@ func (u *Usecase) Do(ctx context.Context, q Query) (Result, error) {
 
 	userID, err := user.ParseUserID(q.UserID)
 	if err != nil {
+		span.RecordError(ErrInvalidUserID)
+		span.SetStatus(codes.Error, ErrInvalidUserID.Error())
 		return Result{}, ErrInvalidUserID
 	}
 
+	span.SetAttributes(attribute.String("user.id", q.UserID))
+
 	limit, err := normalizeLimit(q.Limit)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 
 	sort, err := normalizeSort(q.Sort)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 
@@ -41,6 +51,8 @@ func (u *Usecase) Do(ctx context.Context, q Query) (Result, error) {
 	if q.Cursor != "" {
 		c, err := decodeCursor(q.Cursor)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return Result{}, err
 
 		}
@@ -56,6 +68,8 @@ func (u *Usecase) Do(ctx context.Context, q Query) (Result, error) {
 
 	tasks, next, err := u.repo.List(ctx, dq)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 
@@ -69,9 +83,13 @@ func (u *Usecase) Do(ctx context.Context, q Query) (Result, error) {
 	if next != nil {
 		nextCursor, err = encodeCursor(*next)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return Result{}, err
 		}
 	}
+
+	span.SetAttributes(attribute.Int("task.list.count", len(tasks)))
 
 	return Result{
 		Items:      items,

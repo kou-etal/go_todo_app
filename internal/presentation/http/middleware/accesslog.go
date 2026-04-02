@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/json"
 	"net"
 	"net/http"
 	"strings"
@@ -14,6 +16,7 @@ type responseRecorder struct {
 	statusCode  int
 	wroteHeader bool
 	bytes       int64
+	body        *bytes.Buffer // 4xx/5xx のみキャプチャ
 }
 
 func (r *responseRecorder) Header() http.Header {
@@ -26,6 +29,9 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	}
 	r.statusCode = statusCode
 	r.wroteHeader = true
+	if statusCode >= 400 {
+		r.body = &bytes.Buffer{}
+	}
 	r.w.WriteHeader(statusCode)
 }
 
@@ -35,6 +41,9 @@ func (r *responseRecorder) Write(p []byte) (int, error) {
 	}
 	n, err := r.w.Write(p)
 	r.bytes += int64(n)
+	if r.body != nil && r.body.Len() < 1024 {
+		r.body.Write(p[:n])
+	}
 	return n, err
 }
 
@@ -69,11 +78,26 @@ func AccessLog(lg logger.Logger) func(http.Handler) http.Handler {
 				logger.String("ua", userAgent(r)),
 			}
 
+			var errMsg string
+			if rec.statusCode >= 400 && rec.body != nil && rec.body.Len() > 0 {
+				var errResp struct {
+					Message string `json:"message"`
+				}
+				if json.Unmarshal(rec.body.Bytes(), &errResp) == nil && errResp.Message != "" {
+					errMsg = errResp.Message
+				} else {
+					errMsg = rec.body.String()
+					if len(errMsg) > 200 {
+						errMsg = errMsg[:200]
+					}
+				}
+				attrs = append(attrs, logger.String("error", errMsg))
+			}
+
 			if rec.statusCode >= 500 {
 				lg.Error(r.Context(), "access", nil, attrs...)
-
+				//accesslogのErrorはattrsにエラー含める設計。
 				return
-
 			}
 			lg.Info(r.Context(), "access", attrs...)
 		})

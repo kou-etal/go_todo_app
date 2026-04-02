@@ -12,6 +12,8 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("usecase/task/update")
@@ -31,19 +33,29 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	cmd, err := normalize(cmd)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 
 	}
 	id, err := dtask.ParseTaskID(cmd.ID)
 	if err != nil {
+		span.RecordError(ErrInvalidID)
+		span.SetStatus(codes.Error, ErrInvalidID.Error())
 		return Result{}, ErrInvalidID
 	}
+
+	span.SetAttributes(attribute.String("task.id", cmd.ID))
 
 	now := u.clock.Now()
 	userID, err := user.ParseUserID(cmd.UserID)
 	if err != nil {
+		span.RecordError(ErrInvalidID)
+		span.SetStatus(codes.Error, ErrInvalidID.Error())
 		return Result{}, ErrInvalidID
 	}
+
+	span.SetAttributes(attribute.String("user.id", cmd.UserID))
 
 	reqID, ok := requestid.FromContext(ctx)
 	if !ok || reqID == "" {
@@ -116,18 +128,32 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	}); err != nil {
 		switch {
 		case errors.Is(err, dtask.ErrNotFound):
+			span.RecordError(ErrNotFound)
+			span.SetStatus(codes.Error, ErrNotFound.Error())
 			return Result{}, ErrNotFound
 		case errors.Is(err, dtask.ErrConflict):
+			span.RecordError(ErrConflict)
+			span.SetStatus(codes.Error, ErrConflict.Error())
 			return Result{}, ErrConflict
 		case errors.Is(err, dtask.ErrEmptyTitle):
+			span.RecordError(ErrEmptyTitle)
+			span.SetStatus(codes.Error, ErrEmptyTitle.Error())
 			return Result{}, ErrEmptyTitle
 		case errors.Is(err, dtask.ErrTitleTooLong):
+			span.RecordError(ErrTitleTooLong)
+			span.SetStatus(codes.Error, ErrTitleTooLong.Error())
 			return Result{}, ErrTitleTooLong
 		case errors.Is(err, dtask.ErrEmptyDescription):
+			span.RecordError(ErrEmptyDescription)
+			span.SetStatus(codes.Error, ErrEmptyDescription.Error())
 			return Result{}, ErrEmptyDescription
 		case errors.Is(err, dtask.ErrDescriptionTooLong):
+			span.RecordError(ErrDescriptionTooLong)
+			span.SetStatus(codes.Error, ErrDescriptionTooLong.Error())
 			return Result{}, ErrDescriptionTooLong
 		default:
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return Result{}, err
 		}
 	}

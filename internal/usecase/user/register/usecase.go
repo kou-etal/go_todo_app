@@ -9,6 +9,8 @@ import (
 	dverify "github.com/kou-etal/go_todo_app/internal/domain/user/verification"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("usecase/user/register")
@@ -43,6 +45,8 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 
 	cmd, err := normalize(cmd)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 
@@ -52,10 +56,16 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, duser.ErrEmailTooLong):
+			span.RecordError(ErrEmailTooLong)
+			span.SetStatus(codes.Error, ErrEmailTooLong.Error())
 			return Result{}, ErrEmailTooLong
 		case errors.Is(err, duser.ErrInvalidEmailFormat):
+			span.RecordError(ErrInvalidEmailFormat)
+			span.SetStatus(codes.Error, ErrInvalidEmailFormat.Error())
 			return Result{}, ErrInvalidEmailFormat
 		default:
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return Result{}, err
 		}
 	}
@@ -64,12 +74,20 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, duser.ErrPasswordTooShort):
+			span.RecordError(ErrPasswordTooShort)
+			span.SetStatus(codes.Error, ErrPasswordTooShort.Error())
 			return Result{}, ErrPasswordTooShort
 		case errors.Is(err, duser.ErrPasswordTooLong):
+			span.RecordError(ErrPasswordTooLong)
+			span.SetStatus(codes.Error, ErrPasswordTooLong.Error())
 			return Result{}, ErrPasswordTooLong
 		case errors.Is(err, duser.ErrPasswordHasLeadingOrTrailingSpace):
+			span.RecordError(ErrPasswordHasLeadingOrTrailingSpace)
+			span.SetStatus(codes.Error, ErrPasswordHasLeadingOrTrailingSpace.Error())
 			return Result{}, ErrPasswordHasLeadingOrTrailingSpace
 		default:
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return Result{}, err
 		}
 	}
@@ -78,13 +96,19 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, duser.ErrNameTooLong):
+			span.RecordError(ErrNameTooLong)
+			span.SetStatus(codes.Error, ErrNameTooLong.Error())
 			return Result{}, ErrNameTooLong
 		default:
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return Result{}, err
 		}
 	}
 
 	user := duser.NewUser(email, pass, name, now)
+
+	span.SetAttributes(attribute.String("user.id", user.ID().Value()))
 
 	token, plain, err := dverify.NewEmailVerificationToken(
 		user.ID(),
@@ -93,6 +117,8 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		now,
 	)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 
@@ -110,8 +136,12 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	})
 	if err != nil {
 		if errors.Is(err, duser.ErrConflict) {
+			span.RecordError(ErrConflict)
+			span.SetStatus(codes.Error, ErrConflict.Error())
 			return Result{}, ErrConflict
 		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 

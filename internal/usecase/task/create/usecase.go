@@ -12,6 +12,8 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/observability/requestid"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	//usecaseがこれimportするのは可。そもそもこれがotelの想定パターン。
 	//interface作ってDIで受け取るのは過剰。
 )
@@ -34,16 +36,24 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 
 	cmd, err := normalize(cmd)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	} //usecaseのエラー
 	title, err := dtask.NewTaskTitle(cmd.Title)
 	if err != nil {
 		switch {
 		case errors.Is(err, dtask.ErrEmptyTitle):
+			span.RecordError(ErrEmptyTitle)
+			span.SetStatus(codes.Error, ErrEmptyTitle.Error())
 			return Result{}, ErrEmptyTitle
 		case errors.Is(err, dtask.ErrTitleTooLong):
+			span.RecordError(ErrTitleTooLong)
+			span.SetStatus(codes.Error, ErrTitleTooLong.Error())
 			return Result{}, ErrTitleTooLong
 		default:
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return Result{}, err
 		}
 	}
@@ -51,10 +61,16 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, dtask.ErrEmptyDescription):
+			span.RecordError(ErrEmptyDescription)
+			span.SetStatus(codes.Error, ErrEmptyDescription.Error())
 			return Result{}, ErrEmptyDescription
 		case errors.Is(err, dtask.ErrDescriptionTooLong):
+			span.RecordError(ErrDescriptionTooLong)
+			span.SetStatus(codes.Error, ErrDescriptionTooLong.Error())
 			return Result{}, ErrDescriptionTooLong
 		default:
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return Result{}, err
 		}
 	}
@@ -62,17 +78,26 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 	dueoption, err := normalizeDueOption(cmd.DueDate)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 	due, err := dtask.NewDueDateFromOption(now, dueoption)
 
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 	userID, err := user.ParseUserID(cmd.UserID)
 	if err != nil {
+		span.RecordError(ErrInvalidUserID)
+		span.SetStatus(codes.Error, ErrInvalidUserID.Error())
 		return Result{}, ErrInvalidUserID
 	}
+
+	span.SetAttributes(attribute.String("user.id", cmd.UserID))
+
 	t := dtask.NewTask(userID, title, desc, due, now)
 
 	reqID, ok := requestid.FromContext(ctx)
@@ -93,6 +118,8 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) (Result, error) {
 		}
 		return nil
 	}); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return Result{}, err
 	}
 
