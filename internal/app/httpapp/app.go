@@ -21,6 +21,7 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/infra/security"
 
 	"github.com/kou-etal/go_todo_app/internal/logger"
+	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 	oteltrace "github.com/kou-etal/go_todo_app/internal/observability/trace"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/handler/task"
 	userhandler "github.com/kou-etal/go_todo_app/internal/presentation/http/handler/user"
@@ -37,7 +38,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error) {
+func Build(ctx context.Context, cfg *config.Config) (http.Handler, http.Handler, func(), error) {
 
 	clk := clock.RealClocker{}
 	lg := logger.NewSlog()
@@ -48,14 +49,14 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 		tp, err := oteltrace.NewProvider(ctx, cfg.ServiceName, cfg.OTLPEndpoint)
 		//provider宣言。
 		if err != nil {
-			return nil, func() {}, fmt.Errorf("init tracer: %w", err)
+			return nil, nil, func() {}, fmt.Errorf("init tracer: %w", err)
 		}
 		shutdownTracer = tp.Shutdown //ifの外でshutdownを使うために置く。
 	}
 
 	xdb, closeDB, err := db.NewMySQL(ctx, cfg)
 	if err != nil {
-		return nil, func() {}, fmt.Errorf("start mysql: %w", err)
+		return nil, nil, func() {}, fmt.Errorf("start mysql: %w", err)
 	}
 
 	cleanup := func() {
@@ -170,9 +171,15 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, func(), error
 	})
 	h = middleware.RequestID(h)
 	h = middleware.AccessLog(lg)(h)
+
+	// Metrics
+	mp := metrics.NewProvider()
+	httpMetrics := metrics.NewHTTPMetrics(mp.Registry)
+	h = middleware.Metrics(httpMetrics)(h)
+
 	if cfg.OTLPEndpoint != "" { //エンドポイント存在する場合はwrapする。
 		h = otelhttp.NewHandler(h, "todo-api")
 	}
 
-	return h, cleanup, nil
+	return h, mp.Handler(), cleanup, nil
 }

@@ -7,21 +7,23 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 )
 
 type Worker struct {
 	storage ObjectStorage
 	cfg     Config
 	logger  *slog.Logger
-	metrics *Metrics
+	metrics *metrics.CompactionMetrics
 }
 
-func NewWorker(storage ObjectStorage, cfg Config, logger *slog.Logger, metrics *Metrics) *Worker {
+func NewWorker(storage ObjectStorage, cfg Config, logger *slog.Logger, m *metrics.CompactionMetrics) *Worker {
 	return &Worker{
 		storage: storage,
 		cfg:     cfg,
 		logger:  logger,
-		metrics: metrics,
+		metrics: m,
 	}
 }
 

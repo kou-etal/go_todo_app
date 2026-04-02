@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 )
 
 func readRawEvents(
@@ -15,7 +17,7 @@ func readRawEvents(
 	rawPrefix string,
 
 	claimDates []time.Time,
-	metrics *Metrics,
+	metrics *metrics.CompactionMetrics,
 ) ([]Event, error) {
 	var allEvents []Event
 
@@ -34,7 +36,7 @@ func readEventsForDate(
 	storage ObjectStorage,
 	rawPrefix string,
 	date time.Time,
-	metrics *Metrics,
+	metrics *metrics.CompactionMetrics,
 ) ([]Event, error) {
 	var events []Event
 

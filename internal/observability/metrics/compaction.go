@@ -1,29 +1,26 @@
-package compaction
+package metrics
 
 import "github.com/prometheus/client_golang/prometheus"
 
-type Metrics struct {
+type CompactionMetrics struct {
 	LastSuccessTimestamp prometheus.Gauge
 	LastFailureTimestamp prometheus.Gauge
 	LastRunStatus        prometheus.Gauge
 	LastRunDuration      prometheus.Gauge
-	EventsRead           prometheus.Gauge
-	EventsDeduped        prometheus.Gauge
-	ParquetFiles         prometheus.Gauge
-	S3ListDuration       prometheus.Gauge
-	S3ListCalls          prometheus.Gauge
-	S3ListPages          prometheus.Gauge
-	S3ObjectsListed      prometheus.Gauge
-	S3ReadDuration       prometheus.Gauge
+	EventsRead          prometheus.Gauge
+	EventsDeduped       prometheus.Gauge
+	ParquetFiles        prometheus.Gauge
+	S3ListDuration      prometheus.Gauge
+	S3ListCalls         prometheus.Gauge
+	S3ListPages         prometheus.Gauge
+	S3ObjectsListed     prometheus.Gauge
+	S3ReadDuration      prometheus.Gauge
 	ParquetWriteDuration prometheus.Gauge
-	S3UploadDuration     prometheus.Gauge
-
-	Registry *prometheus.Registry
+	S3UploadDuration    prometheus.Gauge
 }
 
-func NewMetrics() *Metrics {
-	reg := prometheus.NewRegistry()
-	m := &Metrics{
+func NewCompactionMetrics(reg *prometheus.Registry) *CompactionMetrics {
+	m := &CompactionMetrics{
 		LastSuccessTimestamp: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "compaction_last_success_timestamp",
 			Help: "最後に成功した時刻 (unix epoch)",
@@ -80,7 +77,6 @@ func NewMetrics() *Metrics {
 			Name: "compaction_s3_upload_duration_seconds",
 			Help: "S3 Upload (Parquet) の合計所要時間",
 		}),
-		Registry: reg,
 	}
 
 	reg.MustRegister(

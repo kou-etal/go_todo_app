@@ -10,6 +10,7 @@ import (
 	"github.com/apache/arrow-go/v18/arrow/array"
 	"github.com/apache/arrow-go/v18/arrow/memory"
 	"github.com/apache/arrow-go/v18/parquet/pqarrow"
+	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 )
 
 var taskEventSchema = arrow.NewSchema([]arrow.Field{
@@ -78,7 +79,7 @@ func uploadParquet(
 	occurredDay string,
 	claimDate string,
 	events []Event,
-	metrics *Metrics,
+	metrics *metrics.CompactionMetrics,
 ) error {
 	writeStart := time.Now()
 	data, err := writeParquet(events)

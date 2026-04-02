@@ -12,6 +12,9 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
+//otelはsdkある。ゆえにprovider作ったら関数も返すし、グローバル登録して置き場を作る。
+//prometheys client golangはsdk提供してない。
+
 func NewProvider(ctx context.Context, serviceName, otlpEndpoint string) (*sdktrace.TracerProvider, error) {
 	//送る場所定義
 	//Goはかなり細かく定義する。TSはデフォルトの設定が多い。

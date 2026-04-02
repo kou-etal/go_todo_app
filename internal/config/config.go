@@ -15,6 +15,7 @@ type Config struct {
 	JWTSecret       string `env:"TODO_JWT_SECRET" envDefault:"dev-secret-change-me"`
 	AccessTokenTTL  int    `env:"TODO_ACCESS_TOKEN_TTL" envDefault:"900"`
 	RefreshTokenTTL int    `env:"TODO_REFRESH_TOKEN_TTL" envDefault:"604800"`
+	MetricsPort     int    `env:"METRICS_PORT" envDefault:"9090"`
 	OTLPEndpoint    string `env:"OTEL_EXPORTER_OTLP_ENDPOINT" envDefault:""`
 	ServiceName     string `env:"OTEL_SERVICE_NAME" envDefault:"todo-api"`
 }

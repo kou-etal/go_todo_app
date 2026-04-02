@@ -12,6 +12,7 @@ services:
       - .:/app
     ports:
       - "18000:8080"
+      - "9093:9090"
     depends_on:
       - todo-db
       - otel-collector

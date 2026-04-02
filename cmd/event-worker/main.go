@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/kou-etal/go_todo_app/internal/config"
@@ -17,6 +16,7 @@ import (
 	taskeventrepo "github.com/kou-etal/go_todo_app/internal/infra/repository/event"
 	s3infra "github.com/kou-etal/go_todo_app/internal/infra/s3"
 	"github.com/kou-etal/go_todo_app/internal/logger"
+	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 	"github.com/kou-etal/go_todo_app/internal/worker/outbox"
 )
 
@@ -59,7 +59,12 @@ func run(ctx context.Context) error {
 	l := logger.NewSlog()
 	workerCfg := outbox.DefaultConfig()
 
-	w := outbox.NewWorker(repo, uploader, workerCfg, l)
+	//defaultregistryの場合一個しかないからすべてそこに入る。
+	//自前registryやからoutboxとcompactionを使う側で分岐できる。
+	mp := metrics.NewProvider() //使う側のDIで分岐。
+	outboxMetrics := metrics.NewOutboxMetrics(mp.Registry)
+	w := outbox.NewWorker(repo, uploader, workerCfg, l, outboxMetrics)
+	//w.Run()で使う。
 
 	// metrics HTTP サーバー
 	metricsPort := os.Getenv("METRICS_PORT")
@@ -67,7 +72,7 @@ func run(ctx context.Context) error {
 		metricsPort = "9090"
 	}
 	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/metrics", mp.Handler())
 	metricsSrv := &http.Server{Addr: ":" + metricsPort, Handler: mux}
 
 	eg, ctx := errgroup.WithContext(ctx)

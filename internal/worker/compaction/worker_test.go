@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 )
 
 // --- mock storage ---
@@ -94,7 +96,7 @@ func TestWorker_Run_doneMarkerExists_skips(t *testing.T) {
 	// done マーカーを事前配置
 	storage.objects["_state/compaction/2026-02-11.done"] = []byte("done")
 
-	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), NewMetrics())
+	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), metrics.NewCompactionMetrics(metrics.NewProvider().Registry))
 	target := time.Date(2026, 2, 11, 0, 0, 0, 0, time.UTC)
 
 	err := w.Run(context.Background(), target)
@@ -111,7 +113,7 @@ func TestWorker_Run_noEvents_writesDoneOnly(t *testing.T) {
 	t.Parallel()
 
 	storage := newMockStorage()
-	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), NewMetrics())
+	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), metrics.NewCompactionMetrics(metrics.NewProvider().Registry))
 	target := time.Date(2026, 2, 11, 0, 0, 0, 0, time.UTC)
 
 	err := w.Run(context.Background(), target)
@@ -137,7 +139,7 @@ func TestWorker_Run_compactsAndWritesDone(t *testing.T) {
 	}
 	putJSONL(storage, "raw/task-events/year=2026/month=02/day=12/hour=14/batch1.jsonl", events)
 
-	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), NewMetrics())
+	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), metrics.NewCompactionMetrics(metrics.NewProvider().Registry))
 	target := time.Date(2026, 2, 12, 0, 0, 0, 0, time.UTC)
 
 	err := w.Run(context.Background(), target)
@@ -187,7 +189,7 @@ func TestWorker_Run_deduplicatesEvents(t *testing.T) {
 	}
 	putJSONL(storage, "raw/task-events/year=2026/month=02/day=11/hour=10/batch1.jsonl", events)
 
-	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), NewMetrics())
+	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), metrics.NewCompactionMetrics(metrics.NewProvider().Registry))
 	target := time.Date(2026, 2, 11, 0, 0, 0, 0, time.UTC)
 
 	err := w.Run(context.Background(), target)
@@ -216,7 +218,7 @@ func TestWorker_Run_manifestExists_writesDoneOnly(t *testing.T) {
 	// compaction manifest が既に存在（前回途中死亡ケース）
 	storage.objects["_state/compaction/2026-02-11.manifest.json"] = []byte(`{}`)
 
-	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), NewMetrics())
+	w := NewWorker(storage, testCompactionConfig(), testCompactionLogger(), metrics.NewCompactionMetrics(metrics.NewProvider().Registry))
 	target := time.Date(2026, 2, 11, 0, 0, 0, 0, time.UTC)
 
 	err := w.Run(context.Background(), target)

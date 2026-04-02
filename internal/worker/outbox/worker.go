@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kou-etal/go_todo_app/internal/logger"
+	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 )
 
 type Worker struct {
@@ -17,9 +18,10 @@ type Worker struct {
 	ownerID  string
 	s3Prefix string
 	logger   logger.Logger
+	metrics  *metrics.OutboxMetrics
 }
 
-func NewWorker(repo OutboxRepo, uploader ObjectUploader, cfg Config, logger logger.Logger) *Worker {
+func NewWorker(repo OutboxRepo, uploader ObjectUploader, cfg Config, logger logger.Logger, m *metrics.OutboxMetrics) *Worker {
 	return &Worker{
 		repo:     repo,
 		uploader: uploader,
@@ -27,6 +29,7 @@ func NewWorker(repo OutboxRepo, uploader ObjectUploader, cfg Config, logger logg
 		ownerID:  uuid.New().String(),
 		s3Prefix: normalizePrefix("task-events"),
 		logger:   logger,
+		metrics:  m,
 	}
 }
 
@@ -50,7 +53,7 @@ func (w *Worker) Run(ctx context.Context) error {
 		}
 
 		if !processed {
-			outboxIdleCycles.Inc()
+			w.metrics.IdleCycles.Inc()
 			select {
 
 			case <-ctx.Done():
@@ -64,26 +67,26 @@ func (w *Worker) Run(ctx context.Context) error {
 func (w *Worker) processOnce(ctx context.Context) (bool, error) {
 	processStart := time.Now()
 	defer func() {
-		outboxProcessDuration.Observe(time.Since(processStart).Seconds())
+		w.metrics.ProcessDuration.Observe(time.Since(processStart).Seconds())
 	}()
 
 	now := time.Now()
 
 	claimStart := time.Now()
 	records, err := w.repo.Claim(ctx, w.cfg.ChunkMaxRows, now)
-	outboxClaimDuration.Observe(time.Since(claimStart).Seconds())
+	w.metrics.ClaimDuration.Observe(time.Since(claimStart).Seconds())
 	if err != nil {
-		outboxRepoFailures.WithLabelValues("claim").Inc()
+		w.metrics.RepoFailures.WithLabelValues("claim").Inc()
 		return false, fmt.Errorf("claim: %w", err)
 	}
 
-	outboxClaimBatchSize.Observe(float64(len(records)))
+	w.metrics.ClaimBatchSize.Observe(float64(len(records)))
 	if len(records) == 0 {
 		return false, nil
 	}
 
 	for _, r := range records {
-		outboxEventLagToClaim.Observe(now.Sub(r.OccurredAt).Seconds())
+		w.metrics.EventLagToClaim.Observe(now.Sub(r.OccurredAt).Seconds())
 	}
 
 	records = trimByByteLimit(records, w.cfg.ChunkMaxBytes)
@@ -97,14 +100,14 @@ func (w *Worker) processOnce(ctx context.Context) (bool, error) {
 	now = time.Now()
 
 	if err := w.repo.SetLease(ctx, ids, w.ownerID, w.cfg.LeaseDuration, now); err != nil {
-		outboxRepoFailures.WithLabelValues("set_lease").Inc()
+		w.metrics.RepoFailures.WithLabelValues("set_lease").Inc()
 		return false, fmt.Errorf("set lease: %w", err)
 	}
 	leaseUntil := now.Add(w.cfg.LeaseDuration)
 	claimedAt := now
 
-	outboxInflightLeased.Set(float64(len(ids)))
-	defer outboxInflightLeased.Set(0)
+	w.metrics.InflightLeased.Set(float64(len(ids)))
+	defer w.metrics.InflightLeased.Set(0)
 
 	hbCtx, hbCancel := context.WithCancel(ctx)
 	defer hbCancel()
@@ -120,15 +123,15 @@ func (w *Worker) processOnce(ctx context.Context) (bool, error) {
 
 	emitNow := time.Now()
 	if err := w.repo.MarkEmitted(ctx, ids, w.ownerID, emitNow); err != nil {
-		outboxRepoFailures.WithLabelValues("mark_emitted").Inc()
+		w.metrics.RepoFailures.WithLabelValues("mark_emitted").Inc()
 		return true, fmt.Errorf("mark emitted: %w", err)
 	}
 
 	for _, r := range records {
-		outboxEventLagToEmit.Observe(emitNow.Sub(r.OccurredAt).Seconds())
+		w.metrics.EventLagToEmit.Observe(emitNow.Sub(r.OccurredAt).Seconds())
 	}
 
-	outboxEventsEmitted.Add(float64(len(ids)))
+	w.metrics.EventsEmitted.Add(float64(len(ids)))
 	w.logger.Info(ctx, "emitted events", logger.Int("count", len(ids)))
 	return true, nil
 }
@@ -164,7 +167,7 @@ func (w *Worker) emitToS3(
 
 		return fmt.Errorf("upload data: %w", err)
 	}
-	outboxUploadDataDuration.Observe(time.Since(dataStart).Seconds())
+	w.metrics.UploadDataDuration.Observe(time.Since(dataStart).Seconds())
 
 	m := manifest{
 		BatchID:   bid,
@@ -181,7 +184,7 @@ func (w *Worker) emitToS3(
 	if err := w.uploader.Upload(ctx, manifestKey, bytes.NewReader(mJSON)); err != nil {
 		return fmt.Errorf("upload manifest: %w", err)
 	}
-	outboxUploadManifestDuration.Observe(time.Since(manifestStart).Seconds())
+	w.metrics.UploadManifestDuration.Observe(time.Since(manifestStart).Seconds())
 
 	return nil
 
@@ -211,20 +214,20 @@ func (w *Worker) handleFailure(
 	}
 
 	if len(dlqIDs) > 0 {
-		outboxEventsDLQ.Add(float64(len(dlqIDs)))
+		w.metrics.EventsDLQ.Add(float64(len(dlqIDs)))
 		w.logger.Warn(ctx, "moving to DLQ", logger.Attr{Key: "ids", Value: dlqIDs}, logger.Int("count", len(dlqIDs)))
 		if err := w.repo.MoveToDLQ(ctx, dlqIDs, emitErr.Error(), time.Now()); err != nil {
-			outboxRepoFailures.WithLabelValues("move_dlq").Inc()
+			w.metrics.RepoFailures.WithLabelValues("move_dlq").Inc()
 
 			w.logger.Error(ctx, "move to DLQ failed", err)
 		}
 	}
 
 	if len(retryIDs) > 0 {
-		outboxEventsRetried.Add(float64(len(retryIDs)))
+		w.metrics.EventsRetried.Add(float64(len(retryIDs)))
 		nextAt := NextAttemptAt(time.Now(), int(maxRetryCount)+1, w.cfg.BackoffBase)
 		if err := w.repo.MarkRetry(ctx, retryIDs, w.ownerID, nextAt); err != nil {
-			outboxRepoFailures.WithLabelValues("mark_retry").Inc()
+			w.metrics.RepoFailures.WithLabelValues("mark_retry").Inc()
 			w.logger.Error(ctx, "mark retry failed", err)
 		}
 	}
@@ -248,15 +251,15 @@ func (w *Worker) heartbeatLoop(ctx context.Context, ids []string, currentLeaseUn
 				ctx, ids, w.ownerID,
 				currentLeaseUntil, w.cfg.LeaseDuration, now,
 			)
-			outboxHeartbeatExtendDuration.Observe(time.Since(extendStart).Seconds())
+			w.metrics.HeartbeatExtendDuration.Observe(time.Since(extendStart).Seconds())
 			if err != nil {
-				outboxRepoFailures.WithLabelValues("extend_lease").Inc()
+				w.metrics.RepoFailures.WithLabelValues("extend_lease").Inc()
 				w.logger.Error(ctx, "heartbeat extend lease error", err)
 				return
 			}
-			outboxHeartbeatExtendAffected.Observe(float64(affected))
+			w.metrics.HeartbeatExtendAffected.Observe(float64(affected))
 			if affected == 0 {
-				outboxHeartbeatLost.Inc()
+				w.metrics.HeartbeatLost.Inc()
 				w.logger.Warn(ctx, "heartbeat CAS mismatch, lease lost")
 				return
 			}
@@ -280,7 +283,7 @@ func (w *Worker) queueDepthLoop(ctx context.Context) {
 				w.logger.Error(ctx, "queue depth count error", err)
 				continue
 			}
-			outboxQueueDepth.Set(float64(count))
+			w.metrics.QueueDepth.Set(float64(count))
 		}
 	}
 }

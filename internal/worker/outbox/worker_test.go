@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kou-etal/go_todo_app/internal/logger"
+	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 )
 
 // --- mock repo ---
@@ -172,7 +173,7 @@ func TestProcessOnce_noEvents_returnsFalse(t *testing.T) {
 
 	repo := &mockRepo{}
 	up := &mockUploader{}
-	w := NewWorker(repo, up, testConfig(), testLogger())
+	w := NewWorker(repo, up, testConfig(), testLogger(), metrics.NewOutboxMetrics(metrics.NewProvider().Registry))
 
 	processed, err := w.processOnce(context.Background())
 	if err != nil {
@@ -191,7 +192,7 @@ func TestProcessOnce_emitsEvents_markEmitted(t *testing.T) {
 		extendAffected: 2,
 	}
 	up := &mockUploader{}
-	w := NewWorker(repo, up, testConfig(), testLogger())
+	w := NewWorker(repo, up, testConfig(), testLogger(), metrics.NewOutboxMetrics(metrics.NewProvider().Registry))
 
 	processed, err := w.processOnce(context.Background())
 	if err != nil {
@@ -225,7 +226,7 @@ func TestProcessOnce_s3Failure_markRetry(t *testing.T) {
 	up := &mockUploader{
 		uploadErr: errors.New("s3 connection refused"),
 	}
-	w := NewWorker(repo, up, testConfig(), testLogger())
+	w := NewWorker(repo, up, testConfig(), testLogger(), metrics.NewOutboxMetrics(metrics.NewProvider().Registry))
 
 	processed, err := w.processOnce(context.Background())
 	if err != nil {
@@ -260,7 +261,7 @@ func TestProcessOnce_maxAttempt_movesToDLQ(t *testing.T) {
 	}
 	cfg := testConfig()
 	cfg.MaxAttempt = 5
-	w := NewWorker(repo, up, cfg, testLogger())
+	w := NewWorker(repo, up, cfg, testLogger(), metrics.NewOutboxMetrics(metrics.NewProvider().Registry))
 
 	processed, err := w.processOnce(context.Background())
 	if err != nil {
@@ -290,7 +291,7 @@ func TestProcessOnce_manifestExists_skipsUpload(t *testing.T) {
 	up := &mockUploader{
 		existsResult: true, // manifest が既に存在
 	}
-	w := NewWorker(repo, up, testConfig(), testLogger())
+	w := NewWorker(repo, up, testConfig(), testLogger(), metrics.NewOutboxMetrics(metrics.NewProvider().Registry))
 
 	processed, err := w.processOnce(context.Background())
 	if err != nil {
@@ -318,7 +319,7 @@ func TestRun_stopsOnContextCancel(t *testing.T) {
 	cfg := testConfig()
 	cfg.IdleSleep = 50 * time.Millisecond
 
-	w := NewWorker(repo, up, cfg, testLogger())
+	w := NewWorker(repo, up, cfg, testLogger(), metrics.NewOutboxMetrics(metrics.NewProvider().Registry))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
