@@ -24,6 +24,9 @@ profile.cov
 go.work
 go.work.sum
 
+# Air build output
+tmp/
+
 # env file
 .env
 
