@@ -130,7 +130,7 @@ func (w *Worker) writeManifest(ctx context.Context, key string, m compactionMani
 	if err := enc.Encode(m); err != nil {
 		return fmt.Errorf("encode compaction manifest: %w", err)
 	}
-	return w.storage.Upload(ctx, key, &buf)
+	return w.storage.Upload(ctx, key, bytes.NewReader(buf.Bytes()))
 }
 
 func (w *Worker) writeDoneMarker(ctx context.Context, key string) error {

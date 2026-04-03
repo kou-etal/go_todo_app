@@ -1,5 +1,5 @@
 FROM golang:1.24-bullseye as deploy-builder
-ENV GOTOOLCHAIN=auto
+ENV GOTOOLCHAIN=local
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ CMD ["./app"]
 
 # ---------------------------------------------------
 FROM golang:1.24-bullseye AS dev
-ENV GOTOOLCHAIN=auto
+ENV GOTOOLCHAIN=local
 WORKDIR /app
 RUN go install github.com/air-verse/air@v1.61.7
 CMD ["air"]

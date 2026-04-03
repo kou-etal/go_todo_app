@@ -50,6 +50,7 @@ func NewUploader(ctx context.Context, cfg Config) (*Uploader, error) {
 		s3Opts = append(s3Opts, func(o *s3.Options) {
 			o.BaseEndpoint = aws.String(cfg.Endpoint)
 			o.UsePathStyle = cfg.ForcePathStyle
+			o.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
 		})
 	}
 
