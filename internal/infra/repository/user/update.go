@@ -15,7 +15,7 @@ func (r *Repository) MarkEmailVerified(
 ) error {
 
 	const q = `
-UPDATE user
+UPDATE users
 SET
   email_verified_at = ?,
   updated_at = ?,

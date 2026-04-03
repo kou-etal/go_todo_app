@@ -9,7 +9,7 @@ import (
 
 func (r *Repository) Store(ctx context.Context, u *duser.User) error {
 	const q = `
-INSERT INTO user (
+INSERT INTO users (
   id, email, password_hash, user_name, email_verified_at,
   created_at, updated_at, version
 ) VALUES (

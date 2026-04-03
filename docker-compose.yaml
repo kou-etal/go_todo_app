@@ -123,6 +123,7 @@ services:
       - ./docker/promtail/config.yaml:/etc/promtail/config.yaml
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - promtail-positions:/promtail
     depends_on:
       - loki
 
@@ -145,3 +146,4 @@ volumes:
   grafana-data:
   tempo-data:
   loki-data:
+  promtail-positions:
