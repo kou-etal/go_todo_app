@@ -170,6 +170,7 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, http.Handler,
 		AuthMW: authMW,
 	})
 	h = middleware.RequestID(h)
+	h = middleware.Recover(lg)(h)
 	h = middleware.AccessLog(lg)(h)
 
 	// Metrics
