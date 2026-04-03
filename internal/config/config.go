@@ -18,6 +18,7 @@ type Config struct {
 	MetricsPort     int    `env:"METRICS_PORT" envDefault:"9090"`
 	OTLPEndpoint    string `env:"OTEL_EXPORTER_OTLP_ENDPOINT" envDefault:""`
 	ServiceName     string `env:"OTEL_SERVICE_NAME" envDefault:"todo-api"`
+	CORSOrigin      string `env:"CORS_ORIGIN" envDefault:"http://localhost:3000"`
 }
 
 func New() (*Config, error) {

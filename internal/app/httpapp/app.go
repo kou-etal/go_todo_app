@@ -182,5 +182,9 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, http.Handler,
 		h = otelhttp.NewHandler(h, "todo-api")
 	}
 
+	if cfg.CORSOrigin != "" {
+		h = middleware.CORS(cfg.CORSOrigin)(h)
+	}
+
 	return h, mp.Handler(), cleanup, nil
 }
