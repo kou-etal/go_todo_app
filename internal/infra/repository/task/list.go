@@ -26,7 +26,7 @@ func (r *repository) List(ctx context.Context, q dtask.ListQuery) ([]*dtask.Task
 
 	sb.WriteString(`
 SELECT
-  id, title, description, status, due_date,
+  id, user_id, title, description, status, due_date,
   created_at, updated_at, version
 FROM task
 WHERE user_id = ?

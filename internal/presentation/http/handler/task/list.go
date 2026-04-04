@@ -88,6 +88,7 @@ type listItem struct {
 	Description string  `json:"description,omitempty"`
 	Status      string  `json:"status"`
 	DueDate     *string `json:"due_date,omitempty"`
+	Version     uint64  `json:"version"`
 }
 
 func toHTTPListResponse(res list.Result) listResponse {
@@ -104,6 +105,7 @@ func toHTTPListResponse(res list.Result) listResponse {
 			Description: it.Description,
 			Status:      it.Status,
 			DueDate:     due,
+			Version:     uint64(it.Version),
 		})
 	}
 

@@ -29,7 +29,7 @@ func New(deps Deps) http.Handler {
 
 	mux.Handle("/tasks", deps.AuthMW(tasksHandler(deps.Task)))
 
-	mux.Handle("/tasks/", deps.AuthMW(taskHandler(deps.Task)))
+	mux.Handle("/tasks/{id}", deps.AuthMW(taskHandler(deps.Task)))
 
 	mux.Handle("/users", usersHandler(deps.User))
 	mux.Handle("/users/login", loginHandler(deps.User))

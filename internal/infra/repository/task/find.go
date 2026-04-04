@@ -14,7 +14,7 @@ func (r *repository) FindByID(
 
 	const q = `
 SELECT
-  id,title,description,status,due_date,created_at,updated_at,version
+  id,user_id,title,description,status,due_date,created_at,updated_at,version
 FROM task
 WHERE id = ?
 LIMIT 1

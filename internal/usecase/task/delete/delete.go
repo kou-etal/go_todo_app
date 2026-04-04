@@ -79,11 +79,11 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) error {
 			taskevent.DeletedPayload{DateLeft: dateLeft},
 		)
 
-		//楽観ロックはrepoに寄せる。
-		if err := deps.TaskRepo().Delete(ctx, id, cmd.Version); err != nil {
+		if err := deps.TaskEventRepo().Insert(ctx, event); err != nil {
 			return err
 		}
-		if err := deps.TaskEventRepo().Insert(ctx, event); err != nil {
+		//楽観ロックはrepoに寄せる。
+		if err := deps.TaskRepo().Delete(ctx, id, cmd.Version); err != nil {
 			return err
 		}
 		return nil

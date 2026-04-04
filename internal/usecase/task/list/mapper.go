@@ -14,6 +14,7 @@ func mapTaskToItem(t *dtask.Task) Item {
 		Description: t.Description().Value(),
 		Status:      t.Status().Value(),
 		DueDate:     duePtr,
+		Version:     int64(t.Version()),
 	}
 }
 
