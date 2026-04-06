@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -62,8 +63,9 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, http.Handler,
 	cleanup := func() {
 		closeDB()
 		if shutdownTracer != nil {
-			//さっき変数で置いた->ここで使える
-			shutdownTracer(context.Background())
+			if err := shutdownTracer(context.Background()); err != nil {
+				slog.Error("tracer shutdown failed", slog.String("error", err.Error()))
+			}
 		}
 	}
 

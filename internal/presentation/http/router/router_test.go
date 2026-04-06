@@ -66,7 +66,9 @@ func TestTasks_noAuth_returns401(t *testing.T) {
 		t.Fatalf("GET /tasks without auth: status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "unauthorized" {
 		t.Fatalf("message = %q, want %q", resp["message"], "unauthorized")
 	}

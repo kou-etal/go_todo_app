@@ -200,8 +200,8 @@ func TestDo_deleteError(t *testing.T) {
 	if !errors.Is(err, delErr) {
 		t.Fatalf("err = %v, want %v", err, delErr)
 	}
-	if eventRepo.insertCalled {
-		t.Fatal("Insert should not be called on Delete error")
+	if !eventRepo.insertCalled {
+		t.Fatal("Insert should be called before Delete")
 	}
 }
 

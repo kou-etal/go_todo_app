@@ -69,7 +69,9 @@ func putJSONL(m *mockStorage, key string, events []Event) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	for i := range events {
-		enc.Encode(events[i])
+		if err := enc.Encode(events[i]); err != nil {
+			panic(fmt.Sprintf("encode event: %v", err))
+		}
 	}
 	m.objects[key] = buf.Bytes()
 }

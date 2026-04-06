@@ -56,7 +56,9 @@ func TestCreateHandler_invalidJSON(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "invalid body" {
 		t.Fatalf("message = %q, want %q", resp["message"], "invalid body")
 	}
@@ -77,7 +79,9 @@ func TestCreateHandler_emptyTitle(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "title is required" {
 		t.Fatalf("message = %q, want %q", resp["message"], "title is required")
 	}
