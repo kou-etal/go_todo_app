@@ -89,18 +89,10 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ steps.sha.outputs.sha }}
-          format: sarif
-          output: trivy-${{ matrix.service }}.sarif
+          format: table
           severity: HIGH,CRITICAL
           exit-code: "1"
           ignore-unfixed: true
-
-#テストやスキャンが失敗しても必ず実行したいステップにif: always()つける。clean upしないとdockerコンテナ残る。
-      - name: Upload scan results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: trivy-${{ matrix.service }}.sarif
 
   e2e-test:
     name: E2E Test
