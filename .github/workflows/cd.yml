@@ -128,25 +128,25 @@ jobs:
 #dev用はAir（ホットリロード）やソースマウントが入ってる。ゆえにe2e用作る。ここでの設定べた書きはe2e用。すべてダミー。
       - name: Generate .env.ci
         run: |
-          cat > .env.ci << 'EOF'
-          TODO_DB_HOST=todo-db
-          TODO_DB_PORT=3306
-          TODO_DB_USER=todo
-          TODO_DB_PASSWORD=testpass
-          TODO_DB_NAME=todo
-          JWT_SECRET=ci-test-secret-key-do-not-use-in-prod
-          ACCESS_TOKEN_TTL=3600
-          REFRESH_TOKEN_TTL=604800
-          CORS_ORIGIN=http://localhost:3000
-          S3_BUCKET=task-events
-          S3_ENDPOINT=http://minio:9000
-          S3_REGION=ap-northeast-1
-          AWS_ACCESS_KEY_ID=minioadmin
-          AWS_SECRET_ACCESS_KEY=minioadmin
-          OTEL_EXPORTER_OTLP_ENDPOINT=
-          OTEL_SERVICE_NAME=todo-api
-          METRICS_PORT=9090
-          EOF
+          printf '%s\n' \
+            "TODO_DB_HOST=todo-db" \
+            "TODO_DB_PORT=3306" \
+            "TODO_DB_USER=todo" \
+            "TODO_DB_PASSWORD=testpass" \
+            "TODO_DB_NAME=todo" \
+            "JWT_SECRET=ci-test-secret-key-do-not-use-in-prod" \
+            "ACCESS_TOKEN_TTL=3600" \
+            "REFRESH_TOKEN_TTL=604800" \
+            "CORS_ORIGIN=http://localhost:3000" \
+            "S3_BUCKET=task-events" \
+            "S3_ENDPOINT=http://minio:9000" \
+            "S3_REGION=ap-northeast-1" \
+            "AWS_ACCESS_KEY_ID=minioadmin" \
+            "AWS_SECRET_ACCESS_KEY=minioadmin" \
+            "OTEL_EXPORTER_OTLP_ENDPOINT=" \
+            "OTEL_SERVICE_NAME=todo-api" \
+            "METRICS_PORT=9090" \
+            > .env.ci
 
       - name: Start services
         run: docker compose -f docker-compose.ci.yml up -d
@@ -228,30 +228,30 @@ jobs:
             DEPLOY_SHA="${{ steps.sha.outputs.sha }}"
 
             # .env.prod は原子的差し替え
-            cat > "${DEPLOY_DIR}/.env.prod.tmp" << 'ENVEOF'
-            TODO_DB_HOST=${{ vars.TODO_DB_HOST }}
-            TODO_DB_PORT=${{ vars.TODO_DB_PORT }}
-            TODO_DB_USER=${{ vars.TODO_DB_USER }}
-            TODO_DB_PASSWORD=${{ secrets.TODO_DB_PASSWORD }}
-            TODO_DB_NAME=${{ vars.TODO_DB_NAME }}
-            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            ACCESS_TOKEN_TTL=${{ vars.ACCESS_TOKEN_TTL }}
-            REFRESH_TOKEN_TTL=${{ vars.REFRESH_TOKEN_TTL }}
-            S3_BUCKET=${{ vars.S3_BUCKET }}
-            S3_ENDPOINT=${{ vars.S3_ENDPOINT }}
-            S3_REGION=${{ vars.S3_REGION }}
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            MINIO_ROOT_USER=${{ secrets.AWS_ACCESS_KEY_ID }}
-            MINIO_ROOT_PASSWORD=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            OTEL_EXPORTER_OTLP_ENDPOINT=${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}
-            OTEL_SERVICE_NAME=${{ vars.OTEL_SERVICE_NAME }}
-            CORS_ORIGIN=${{ vars.CORS_ORIGIN }}
-            METRICS_PORT=${{ vars.METRICS_PORT }}
-            GF_SECURITY_ADMIN_USER=${{ secrets.GF_ADMIN_USER }}
-            GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_ADMIN_PASSWORD }}
-            ENVEOF
+            printf '%s\n' \
+              "TODO_DB_HOST=${{ vars.TODO_DB_HOST }}" \
+              "TODO_DB_PORT=${{ vars.TODO_DB_PORT }}" \
+              "TODO_DB_USER=${{ vars.TODO_DB_USER }}" \
+              "TODO_DB_PASSWORD=${{ secrets.TODO_DB_PASSWORD }}" \
+              "TODO_DB_NAME=${{ vars.TODO_DB_NAME }}" \
+              "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "ACCESS_TOKEN_TTL=${{ vars.ACCESS_TOKEN_TTL }}" \
+              "REFRESH_TOKEN_TTL=${{ vars.REFRESH_TOKEN_TTL }}" \
+              "S3_BUCKET=${{ vars.S3_BUCKET }}" \
+              "S3_ENDPOINT=${{ vars.S3_ENDPOINT }}" \
+              "S3_REGION=${{ vars.S3_REGION }}" \
+              "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+              "MINIO_ROOT_USER=${{ secrets.AWS_ACCESS_KEY_ID }}" \
+              "MINIO_ROOT_PASSWORD=${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+              "OTEL_EXPORTER_OTLP_ENDPOINT=${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}" \
+              "OTEL_SERVICE_NAME=${{ vars.OTEL_SERVICE_NAME }}" \
+              "CORS_ORIGIN=${{ vars.CORS_ORIGIN }}" \
+              "METRICS_PORT=${{ vars.METRICS_PORT }}" \
+              "GF_SECURITY_ADMIN_USER=${{ secrets.GF_ADMIN_USER }}" \
+              "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_ADMIN_PASSWORD }}" \
+              > "${DEPLOY_DIR}/.env.prod.tmp"
 
             # 検証: ファイルが空でないことを確認
             if [ ! -s "${DEPLOY_DIR}/.env.prod.tmp" ]; then
