@@ -28,7 +28,7 @@ jobs:
           go-version-file: go.mod
 #Golintの設定使う
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
           version: latest
 #フロントエンドのlint。eslint.config.mjsが設定。

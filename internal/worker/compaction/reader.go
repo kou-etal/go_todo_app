@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -76,7 +77,11 @@ func readJSONLFile(ctx context.Context, storage ObjectStorage, key string) ([]Ev
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer func() {
+		if err := body.Close(); err != nil {
+			slog.Error("failed to close S3 body", slog.String("error", err.Error()))
+		}
+	}()
 
 	var events []Event
 	scanner := bufio.NewScanner(body)
