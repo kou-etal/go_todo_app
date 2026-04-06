@@ -229,6 +229,9 @@ jobs:
               "TODO_DB_PASSWORD=${{ secrets.TODO_DB_PASSWORD }}" \
               "TODO_DB_NAME=${{ vars.TODO_DB_NAME }}" \
               "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+              "MYSQL_USER=${{ vars.TODO_DB_USER }}" \
+              "MYSQL_PASSWORD=${{ secrets.TODO_DB_PASSWORD }}" \
+              "MYSQL_DATABASE=${{ vars.TODO_DB_NAME }}" \
               "TODO_JWT_SECRET=${{ secrets.JWT_SECRET }}" \
               "TODO_ACCESS_TOKEN_TTL=${{ vars.ACCESS_TOKEN_TTL }}" \
               "TODO_REFRESH_TOKEN_TTL=${{ vars.REFRESH_TOKEN_TTL }}" \
