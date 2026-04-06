@@ -1,5 +1,6 @@
 FROM golang:1.24-bullseye as deploy-builder
 ENV GOTOOLCHAIN=local
+ARG CMD=todo-api
 
 WORKDIR /app
 
@@ -7,13 +8,15 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -trimpath -ldflags "-w -s" -o app
+RUN go build -trimpath -ldflags "-w -s" -o app ./cmd/${CMD}
 
 # ---------------------------------------------------
 
 FROM debian:bullseye-slim as deploy
 
-RUN apt-get update
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=deploy-builder /app/app .
 

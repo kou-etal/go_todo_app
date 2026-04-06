@@ -1,0 +1,25 @@
+services:
+  app:
+    image: todo-api:ci
+    env_file: .env.ci
+    ports:
+      - "18000:8080"
+    depends_on:
+      todo-db:
+        condition: service_healthy
+
+  todo-db:
+    image: mysql:8.0.29
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: testroot
+      MYSQL_DATABASE: todo
+      MYSQL_USER: todo
+      MYSQL_PASSWORD: testpass
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
