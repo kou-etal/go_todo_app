@@ -1,6 +1,6 @@
 module github.com/kou-etal/go_todo_app
 
-go 1.26.1
+go 1.25.8
 
 require (
 	github.com/XSAM/otelsql v0.41.0
