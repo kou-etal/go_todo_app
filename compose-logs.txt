@@ -1,0 +1,48 @@
+app-1  | 2026/04/06 11:56:47 failed to terminated server: build app: start mysql: dial tcp 172.18.0.2:3306: connect: connection refused
+todo-db-1  | 2026-04-06 11:56:41+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 8.0.29-1.el8 started.
+todo-db-1  | 2026-04-06 11:56:41+00:00 [Note] [Entrypoint]: Switching to dedicated user 'mysql'
+todo-db-1  | 2026-04-06 11:56:41+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 8.0.29-1.el8 started.
+todo-db-1  | 2026-04-06 11:56:41+00:00 [Note] [Entrypoint]: Initializing database files
+todo-db-1  | 2026-04-06T11:56:41.725121Z 0 [System] [MY-013169] [Server] /usr/sbin/mysqld (mysqld 8.0.29) initializing of server in progress as process 42
+todo-db-1  | 2026-04-06T11:56:41.729595Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+todo-db-1  | 2026-04-06T11:56:41.854100Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+todo-db-1  | 2026-04-06T11:56:42.475498Z 6 [Warning] [MY-010453] [Server] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
+todo-db-1  | 2026-04-06 11:56:44+00:00 [Note] [Entrypoint]: Database files initialized
+todo-db-1  | 2026-04-06 11:56:44+00:00 [Note] [Entrypoint]: Starting temporary server
+todo-db-1  | 2026-04-06T11:56:44.831758Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.29) starting as process 91
+todo-db-1  | 2026-04-06T11:56:44.840952Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+todo-db-1  | 2026-04-06T11:56:44.900577Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+todo-db-1  | 2026-04-06T11:56:45.071750Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+todo-db-1  | 2026-04-06T11:56:45.071781Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+todo-db-1  | 2026-04-06T11:56:45.072555Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+todo-db-1  | 2026-04-06T11:56:45.084486Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Socket: /var/run/mysqld/mysqlx.sock
+todo-db-1  | 2026-04-06T11:56:45.084592Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.29'  socket: '/var/run/mysqld/mysqld.sock'  port: 0  MySQL Community Server - GPL.
+todo-db-1  | 2026-04-06 11:56:45+00:00 [Note] [Entrypoint]: Temporary server started.
+todo-db-1  | '/var/lib/mysql/mysql.sock' -> '/var/run/mysqld/mysqld.sock'
+todo-db-1  | Warning: Unable to load '/usr/share/zoneinfo/iso3166.tab' as time zone. Skipping it.
+todo-db-1  | Warning: Unable to load '/usr/share/zoneinfo/leapseconds' as time zone. Skipping it.
+todo-db-1  | Warning: Unable to load '/usr/share/zoneinfo/tzdata.zi' as time zone. Skipping it.
+todo-db-1  | Warning: Unable to load '/usr/share/zoneinfo/zone.tab' as time zone. Skipping it.
+todo-db-1  | Warning: Unable to load '/usr/share/zoneinfo/zone1970.tab' as time zone. Skipping it.
+todo-db-1  | 2026-04-06 11:56:46+00:00 [Note] [Entrypoint]: Creating database todo
+todo-db-1  | 2026-04-06 11:56:46+00:00 [Note] [Entrypoint]: Creating user todo
+todo-db-1  | 2026-04-06 11:56:46+00:00 [Note] [Entrypoint]: Giving user todo access to schema todo
+todo-db-1  | 
+todo-db-1  | 2026-04-06 11:56:46+00:00 [Note] [Entrypoint]: /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/schema.sql
+todo-db-1  | 
+todo-db-1  | 
+todo-db-1  | 2026-04-06 11:56:46+00:00 [Note] [Entrypoint]: Stopping temporary server
+todo-db-1  | 2026-04-06T11:56:46.828846Z 15 [System] [MY-013172] [Server] Received SHUTDOWN from user root. Shutting down mysqld (Version: 8.0.29).
+todo-db-1  | 2026-04-06T11:56:47.547825Z 0 [System] [MY-010910] [Server] /usr/sbin/mysqld: Shutdown complete (mysqld 8.0.29)  MySQL Community Server - GPL.
+todo-db-1  | 2026-04-06 11:56:47+00:00 [Note] [Entrypoint]: Temporary server stopped
+todo-db-1  | 
+todo-db-1  | 2026-04-06 11:56:47+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
+todo-db-1  | 
+todo-db-1  | 2026-04-06T11:56:48.013230Z 0 [System] [MY-010116] [Server] /usr/sbin/mysqld (mysqld 8.0.29) starting as process 1
+todo-db-1  | 2026-04-06T11:56:48.018411Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+todo-db-1  | 2026-04-06T11:56:48.076901Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+todo-db-1  | 2026-04-06T11:56:48.226017Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+todo-db-1  | 2026-04-06T11:56:48.226057Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+todo-db-1  | 2026-04-06T11:56:48.226826Z 0 [Warning] [MY-011810] [Server] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+todo-db-1  | 2026-04-06T11:56:48.239046Z 0 [System] [MY-011323] [Server] X Plugin ready for connections. Bind-address: '::' port: 33060, socket: /var/run/mysqld/mysqlx.sock
+todo-db-1  | 2026-04-06T11:56:48.239123Z 0 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections. Version: '8.0.29'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server - GPL.
