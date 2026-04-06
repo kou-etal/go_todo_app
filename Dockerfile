@@ -1,4 +1,4 @@
-FROM golang:1.24-bullseye as deploy-builder
+FROM golang:1.24-bookworm as deploy-builder
 ENV GOTOOLCHAIN=local
 ARG CMD=todo-api
 
@@ -12,7 +12,7 @@ RUN go build -trimpath -ldflags "-w -s" -o app ./cmd/${CMD}
 
 # ---------------------------------------------------
 
-FROM debian:bullseye-slim as deploy
+FROM debian:bookworm-slim as deploy
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
