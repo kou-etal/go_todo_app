@@ -102,7 +102,9 @@ func TestCreateHandler_invalidDue(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "invalid due_date" {
 		t.Fatalf("message = %q, want %q", resp["message"], "invalid due_date")
 	}
@@ -127,7 +129,9 @@ func TestCreateHandler_internalError(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "internal server error" {
 		t.Fatalf("message = %q, want %q", resp["message"], "internal server error")
 	}

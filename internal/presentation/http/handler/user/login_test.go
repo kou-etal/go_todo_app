@@ -169,7 +169,9 @@ func TestLoginHandler_invalidCredentials(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "invalid credentials" {
 		t.Fatalf("message = %q, want %q", resp["message"], "invalid credentials")
 	}
@@ -221,7 +223,9 @@ func TestLoginHandler_emptyEmail(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "email is required" {
 		t.Fatalf("message = %q, want %q", resp["message"], "email is required")
 	}

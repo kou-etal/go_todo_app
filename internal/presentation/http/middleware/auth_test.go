@@ -53,7 +53,9 @@ func TestAuth_noHeader_returns401(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "authorization header is required" {
 		t.Fatalf("message = %q", resp["message"])
 	}
@@ -79,7 +81,9 @@ func TestAuth_invalidFormat_returns401(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "invalid authorization header format" {
 		t.Fatalf("message = %q", resp["message"])
 	}
@@ -105,7 +109,9 @@ func TestAuth_invalidToken_returns401(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "invalid or expired token" {
 		t.Fatalf("message = %q", resp["message"])
 	}

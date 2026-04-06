@@ -54,7 +54,9 @@ func TestUpdateHandler_happyPath(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["id"] == "" {
 		t.Fatal("response id should not be empty")
 	}
@@ -74,7 +76,9 @@ func TestUpdateHandler_zeroVersion(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "invalid version" {
 		t.Fatalf("message = %q, want %q", resp["message"], "invalid version")
 	}
@@ -98,7 +102,9 @@ func TestUpdateHandler_conflict(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusConflict)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "conflict" {
 		t.Fatalf("message = %q, want %q", resp["message"], "conflict")
 	}

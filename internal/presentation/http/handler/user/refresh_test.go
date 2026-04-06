@@ -127,7 +127,9 @@ func TestRefreshHandler_emptyToken(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "refresh token is required" {
 		t.Fatalf("message = %q, want %q", resp["message"], "refresh token is required")
 	}
@@ -150,7 +152,9 @@ func TestRefreshHandler_invalidToken(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
 	}
 	var resp map[string]string
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if resp["message"] != "invalid or expired refresh token" {
 		t.Fatalf("message = %q, want %q", resp["message"], "invalid or expired refresh token")
 	}
