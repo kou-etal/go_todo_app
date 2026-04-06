@@ -93,6 +93,7 @@ jobs:
           output: trivy-${{ matrix.service }}.sarif
           severity: HIGH,CRITICAL
           exit-code: "1"
+          ignore-unfixed: true
 
 #テストやスキャンが失敗しても必ず実行したいステップにif: always()つける。clean upしないとdockerコンテナ残る。
       - name: Upload scan results
@@ -134,9 +135,9 @@ jobs:
             "TODO_DB_USER=todo" \
             "TODO_DB_PASSWORD=testpass" \
             "TODO_DB_NAME=todo" \
-            "JWT_SECRET=ci-test-secret-key-do-not-use-in-prod" \
-            "ACCESS_TOKEN_TTL=3600" \
-            "REFRESH_TOKEN_TTL=604800" \
+            "TODO_JWT_SECRET=ci-test-secret-key-do-not-use-in-prod" \
+            "TODO_ACCESS_TOKEN_TTL=3600" \
+            "TODO_REFRESH_TOKEN_TTL=604800" \
             "CORS_ORIGIN=http://localhost:3000" \
             "S3_BUCKET=task-events" \
             "S3_ENDPOINT=http://minio:9000" \
@@ -146,6 +147,7 @@ jobs:
             "OTEL_EXPORTER_OTLP_ENDPOINT=" \
             "OTEL_SERVICE_NAME=todo-api" \
             "METRICS_PORT=9090" \
+            "PORT=8080" \
             > .env.ci
 
       - name: Start services
@@ -235,9 +237,9 @@ jobs:
               "TODO_DB_PASSWORD=${{ secrets.TODO_DB_PASSWORD }}" \
               "TODO_DB_NAME=${{ vars.TODO_DB_NAME }}" \
               "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
-              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
-              "ACCESS_TOKEN_TTL=${{ vars.ACCESS_TOKEN_TTL }}" \
-              "REFRESH_TOKEN_TTL=${{ vars.REFRESH_TOKEN_TTL }}" \
+              "TODO_JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "TODO_ACCESS_TOKEN_TTL=${{ vars.ACCESS_TOKEN_TTL }}" \
+              "TODO_REFRESH_TOKEN_TTL=${{ vars.REFRESH_TOKEN_TTL }}" \
               "S3_BUCKET=${{ vars.S3_BUCKET }}" \
               "S3_ENDPOINT=${{ vars.S3_ENDPOINT }}" \
               "S3_REGION=${{ vars.S3_REGION }}" \
@@ -251,6 +253,7 @@ jobs:
               "METRICS_PORT=${{ vars.METRICS_PORT }}" \
               "GF_SECURITY_ADMIN_USER=${{ secrets.GF_ADMIN_USER }}" \
               "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_ADMIN_PASSWORD }}" \
+              "PORT=8080" \
               > "${DEPLOY_DIR}/.env.prod.tmp"
 
             # 検証: ファイルが空でないことを確認

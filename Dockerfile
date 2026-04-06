@@ -1,4 +1,4 @@
-FROM golang:1.24-bookworm as deploy-builder
+FROM golang:1.26-bookworm as deploy-builder
 ENV GOTOOLCHAIN=local
 ARG CMD=todo-api
 
@@ -23,7 +23,7 @@ COPY --from=deploy-builder /app/app .
 CMD ["./app"]
 
 # ---------------------------------------------------
-FROM golang:1.24-bullseye AS dev
+FROM golang:1.26-bookworm AS dev
 ENV GOTOOLCHAIN=local
 WORKDIR /app
 RUN go install github.com/air-verse/air@v1.61.7
