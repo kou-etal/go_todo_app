@@ -1,7 +1,5 @@
 package task
 
-import "errors"
-
 type TaskStatus string
 
 const (
@@ -19,10 +17,10 @@ func ParseTaskStatus(v string) (TaskStatus, error) {
 	case string(StatusDone):
 		return StatusDone, nil
 	default:
-		return "", errors.New("tmp")
+		return "", ErrInvalidStatus
 	}
 }
 
 func (t TaskStatus) Value() string {
 	return string(t)
-} //これは抽象化、string(t)は表現
+}

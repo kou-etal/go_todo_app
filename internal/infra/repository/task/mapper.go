@@ -5,16 +5,18 @@ import (
 	"time"
 
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
+	duser "github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 
 	id := dtask.TaskID(r.ID)
+	userID := duser.UserID(r.UserID)
 
 	title, err := dtask.NewTaskTitle(r.Title)
 	if err != nil {
 		return nil, fmt.Errorf("invalid task record id=%s field=title: %w", r.ID, err)
-	} //これはDBがバグってることによるエラーゆえにdomainのエラーは使わずにwrapして返す
+	}
 
 	description, err := dtask.NewTaskDescription(r.Description)
 	if err != nil {
@@ -33,6 +35,7 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 
 	return dtask.ReconstructTask(
 		id,
+		userID,
 		title,
 		description,
 		status,
@@ -46,10 +49,11 @@ func RecordToEntity(r *TaskRecord) (*dtask.Task, error) {
 func EntityToRecord(t *dtask.Task) *TaskRecord {
 
 	return &TaskRecord{
-		ID:          string(t.ID()),
-		Title:       string(t.Title().Value()),
-		Description: string(t.Description().Value()),
-		Status:      string(t.Status()),
+		ID:          t.ID().Value(),
+		UserID:      t.UserID().Value(),
+		Title:       t.Title().Value(),
+		Description: t.Description().Value(),
+		Status:      t.Status().Value(),
 		DueDate:     time.Time(t.DueDate().Value()),
 		Created:     t.CreatedAt(),
 		Updated:     t.UpdatedAt(),

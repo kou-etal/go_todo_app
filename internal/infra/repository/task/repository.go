@@ -5,14 +5,14 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/infra/db"
 )
 
-type Repository struct {
+type repository struct {
 	q db.QueryerExecer
-} //packageのstructは同一。これやとsaveのexecuer不可
+}
 
-var _ dtask.TaskRepository = (*Repository)(nil)
+var _ dtask.TaskRepository = (*repository)(nil)
 
-func NewRepository(db db.QueryerExecer) *Repository {
-	return &Repository{
+func New(db db.QueryerExecer) *repository {
+	return &repository{
 		q: db,
 	}
 }

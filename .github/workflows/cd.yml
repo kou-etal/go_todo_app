@@ -1,0 +1,279 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+    #デプロイだけ切り離して実行可能。
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "デプロイする commit SHA (空欄で最新)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+#concurrencyの設定で、デプロイが同時に動かないように設定。cancel-in-progress: false。次のデプロイはキューで待つ。
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+#環境変数のenvではない。レジストリ設定。
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/kou-etal
+
+#matrixビルドで3サービスを並行でビルド・push。
+jobs:
+  build-images:
+    name: Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [todo-api, event-worker, compaction]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.sha || github.sha }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set deploy SHA
+        id: sha
+        run: echo "sha=${{ github.event.inputs.sha || github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: deploy
+          build-args: CMD=${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ steps.sha.outputs.sha }}
+            ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:latest
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          #DockerのビルドキャッシュをGitHub Actionsのキャッシュに保存する設定
+
+
+  security-scan:
+    name: Scan ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: build-images
+    strategy:
+      matrix:
+        service: [todo-api, event-worker, compaction]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set deploy SHA
+        id: sha
+        run: echo "sha=${{ github.event.inputs.sha || github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_PREFIX }}/${{ matrix.service }}:${{ steps.sha.outputs.sha }}
+          format: sarif
+          output: trivy-${{ matrix.service }}.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+#テストやスキャンが失敗しても必ず実行したいステップにif: always()つける。clean upしないとdockerコンテナ残る。
+      - name: Upload scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-${{ matrix.service }}.sarif
+
+  e2e-test:
+    name: E2E Test
+    runs-on: ubuntu-latest
+    needs: build-images
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.sha || github.sha }}
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set deploy SHA
+        id: sha
+        run: echo "sha=${{ github.event.inputs.sha || github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Pull built image
+        run: |
+          docker pull ${{ env.IMAGE_PREFIX }}/todo-api:${{ steps.sha.outputs.sha }}
+          docker tag ${{ env.IMAGE_PREFIX }}/todo-api:${{ steps.sha.outputs.sha }} todo-api:ci
+#docker-compose.ymlはdev用。docker-compose.ci.yml がCI E2E用。docker-compose.prod.yml はdeploy用。
+#dev用はAir（ホットリロード）やソースマウントが入ってる。ゆえにe2e用作る。ここでの設定べた書きはe2e用。すべてダミー。
+      - name: Generate .env.ci
+        run: |
+          cat > .env.ci << 'EOF'
+          TODO_DB_HOST=todo-db
+          TODO_DB_PORT=3306
+          TODO_DB_USER=todo
+          TODO_DB_PASSWORD=testpass
+          TODO_DB_NAME=todo
+          JWT_SECRET=ci-test-secret-key-do-not-use-in-prod
+          ACCESS_TOKEN_TTL=3600
+          REFRESH_TOKEN_TTL=604800
+          CORS_ORIGIN=http://localhost:3000
+          S3_BUCKET=task-events
+          S3_ENDPOINT=http://minio:9000
+          S3_REGION=ap-northeast-1
+          AWS_ACCESS_KEY_ID=minioadmin
+          AWS_SECRET_ACCESS_KEY=minioadmin
+          OTEL_EXPORTER_OTLP_ENDPOINT=
+          OTEL_SERVICE_NAME=todo-api
+          METRICS_PORT=9090
+          EOF
+
+      - name: Start services
+        run: docker compose -f docker-compose.ci.yml up -d
+
+      - name: Wait for health check
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:18000/health > /dev/null 2>&1; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Waiting for app... ($i/30)"
+            sleep 2
+          done
+          echo "Health check timed out"
+          exit 1
+
+      - name: Run E2E tests
+        run: bash scripts/e2e.sh
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.ci.yml logs > compose-logs.txt 2>&1
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-logs
+          path: compose-logs.txt
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v
+
+#設定はactions secret(共通)とenvironment secret(prod切り替え、機密)とencironment var(prod切り替え、機密ではない)に分ける。
+#actions secretはGUIで設定する。TOKENはactionsが自動で設定する。
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: [security-scan, e2e-test]
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.sha || github.sha }}
+
+      - name: Set deploy SHA
+        id: sha
+        run: echo "sha=${{ github.event.inputs.sha || github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+#rsyncでdocker-compose.prod.ymlとdocker/配下の設定ファイルをVPSに同期する。
+#変更があったファイルだけ転送。--deleteでVPS側の不要ファイルも削除。
+      - name: Sync config files to VPS
+        run: |
+          rsync -avz --delete \
+            --exclude '.env.prod' \
+            --exclude '.env.prod.tmp' \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            docker-compose.prod.yml docker/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ vars.VPS_DEPLOY_PATH }}/
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            DEPLOY_DIR="${{ vars.VPS_DEPLOY_PATH }}"
+            DEPLOY_SHA="${{ steps.sha.outputs.sha }}"
+
+            # .env.prod は原子的差し替え
+            cat > "${DEPLOY_DIR}/.env.prod.tmp" << 'ENVEOF'
+            TODO_DB_HOST=${{ vars.TODO_DB_HOST }}
+            TODO_DB_PORT=${{ vars.TODO_DB_PORT }}
+            TODO_DB_USER=${{ vars.TODO_DB_USER }}
+            TODO_DB_PASSWORD=${{ secrets.TODO_DB_PASSWORD }}
+            TODO_DB_NAME=${{ vars.TODO_DB_NAME }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            ACCESS_TOKEN_TTL=${{ vars.ACCESS_TOKEN_TTL }}
+            REFRESH_TOKEN_TTL=${{ vars.REFRESH_TOKEN_TTL }}
+            S3_BUCKET=${{ vars.S3_BUCKET }}
+            S3_ENDPOINT=${{ vars.S3_ENDPOINT }}
+            S3_REGION=${{ vars.S3_REGION }}
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            MINIO_ROOT_USER=${{ secrets.AWS_ACCESS_KEY_ID }}
+            MINIO_ROOT_PASSWORD=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            OTEL_EXPORTER_OTLP_ENDPOINT=${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}
+            OTEL_SERVICE_NAME=${{ vars.OTEL_SERVICE_NAME }}
+            CORS_ORIGIN=${{ vars.CORS_ORIGIN }}
+            METRICS_PORT=${{ vars.METRICS_PORT }}
+            GF_SECURITY_ADMIN_USER=${{ secrets.GF_ADMIN_USER }}
+            GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_ADMIN_PASSWORD }}
+            ENVEOF
+
+            # 検証: ファイルが空でないことを確認
+            if [ ! -s "${DEPLOY_DIR}/.env.prod.tmp" ]; then
+              echo "ERROR: .env.prod.tmp is empty"
+              exit 1
+            fi
+            mv "${DEPLOY_DIR}/.env.prod.tmp" "${DEPLOY_DIR}/.env.prod"
+
+            # イメージ pull & 起動
+            cd "${DEPLOY_DIR}"
+            export DEPLOY_SHA="${DEPLOY_SHA}"
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+
+            # ヘルスチェック
+            for i in $(seq 1 15); do
+              if curl -sf http://localhost:18000/health > /dev/null 2>&1; then
+                echo "Deploy successful (SHA: ${DEPLOY_SHA})"
+                exit 0
+              fi
+              echo "Waiting for health check... ($i/15)"
+              sleep 2
+            done
+            echo "ERROR: Health check failed after deploy"
+            exit 1

@@ -1,0 +1,115 @@
+services:
+  app:
+    image: ghcr.io/kou-etal/todo-api:${DEPLOY_SHA:-latest}
+    env_file: .env.prod
+    ports:
+      - "127.0.0.1:18000:8080"
+    depends_on:
+      - todo-db
+      - otel-collector
+    restart: unless-stopped
+    #restart: unless-stopped クラッシュした場合再起動。
+
+  event-worker:
+    image: ghcr.io/kou-etal/event-worker:${DEPLOY_SHA:-latest}
+    env_file: .env.prod
+    depends_on:
+      - todo-db
+      - minio
+    restart: unless-stopped
+
+  todo-db:
+    image: mysql:8.0.29
+    platform: linux/amd64
+    env_file: .env.prod
+    volumes:
+      - todo-db-data:/var/lib/mysql
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    env_file: .env.prod
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    env_file: .env.prod
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 1; done;
+      mc mb --ignore-existing local/task-events;
+      "
+
+  pushgateway:
+    image: prom/pushgateway:latest
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./docker/otel-collector/config.yaml:/etc/otelcol/config.yaml
+    depends_on:
+      - tempo
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.7.0
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./docker/tempo/tempo.yaml:/etc/tempo.yaml
+      - tempo-data:/var/tempo
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:latest
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./docker/loki/loki.yaml:/etc/loki/loki.yaml
+      - loki-data:/loki
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:latest
+    command: ["-config.file=/etc/promtail/config.yaml"]
+    volumes:
+      - ./docker/promtail/config.yaml:/etc/promtail/config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - promtail-positions:/promtail
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file: .env.prod
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+    restart: unless-stopped
+
+volumes:
+  todo-db-data:
+  minio-data:
+  prometheus-data:
+  grafana-data:
+  tempo-data:
+  loki-data:
+  promtail-positions:

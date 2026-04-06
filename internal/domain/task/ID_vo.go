@@ -1,14 +1,12 @@
 package task
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
 )
 
 type TaskID string
 
-// ULIDも存在、より便利
+// ULIDも存在
 func NewTaskID() TaskID {
 	return TaskID(uuid.New().String())
 }
@@ -16,10 +14,10 @@ func NewTaskID() TaskID {
 func ParseTaskID(v string) (TaskID, error) {
 	_, err := uuid.Parse(v)
 	if err != nil {
-		return "", errors.New("tmp")
+		return "", ErrInvalidID
 	}
 	return TaskID(v), nil
-}
+} //これはtoEntityで使う。
 func (id TaskID) Value() string {
 	return string(id)
 }

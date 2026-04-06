@@ -1,4 +1,4 @@
-package taskhandler
+package task
 
 import (
 	"encoding/json"
@@ -6,28 +6,32 @@ import (
 	"io"
 	"net/http"
 
-	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
 	"github.com/kou-etal/go_todo_app/internal/logger"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/responder"
 	"github.com/kou-etal/go_todo_app/internal/usecase/task/create"
 )
 
-type CreateTaskHandler struct {
+type createHandler struct {
 	uc     *create.Usecase
 	logger logger.Logger
 }
 
-func NewCreate(uc *create.Usecase, lg logger.Logger) *CreateTaskHandler {
-	return &CreateTaskHandler{
+func NewCreate(uc *create.Usecase, lg logger.Logger) *createHandler {
+	return &createHandler{
 		uc:     uc,
 		logger: lg,
 	}
 }
-func (h *CreateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *createHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	uid, ok := userIDFromRequest(w, r)
+	if !ok {
+		return
+	}
+
 	var req createRequest
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) //DOS対策。1MB。wに記述。
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
@@ -36,7 +40,7 @@ func (h *CreateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.logger.Debug(
 			ctx,
 			"invalid json body",
-			err, //ここはdebugでエラー返す
+			err,
 		)
 		responder.JSON(
 			w,
@@ -45,8 +49,7 @@ func (h *CreateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	//{ "title": "a" }{ "title": "b" }を防ぐ
-	//&struct{}{}はtype struct a{}  dec.Decode(&a{});
+
 	if err := dec.Decode(&struct{}{}); err != io.EOF {
 		h.logger.Debug(
 			ctx,
@@ -62,67 +65,34 @@ func (h *CreateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmd := create.Command{
+		UserID:      uid.Value(),
 		Title:       req.Title,
 		Description: req.Description,
-		DueDate:     req.DueDate, //7/14/21/30
-	} //いやでもdtask.dueoption変換の責務をcomandが持たなかったらcommandの意味なくねっていう考え方もある。
+		DueDate:     req.DueDate,
+	}
 	res, err := h.uc.Do(ctx, cmd)
 	if err != nil {
 		switch {
-		//TODO:エラーメッセージが雑すぎる。Message: "invalid request"は不親切。
-		// TODO:あとdomainのエラーはusecaseで吸収したほうがいい。今やとdomain変更したらhandlerも変更。
-		// usecaseエラー
-		//ここはdebugでエラー返さなくていい。fieldとreason返す。
-		case errors.Is(err, create.ErrInvalidTitle):
-			h.logger.Debug(
-				ctx,
-				"invalid command",
-				nil,
-				logger.String("field", "title"),
-				logger.String("reason", "invalid"),
-			)
-			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{
-				Message: "invalid request",
-			})
+		case errors.Is(err, create.ErrEmptyTitle):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "title"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "title is required"})
 			return
-		case errors.Is(err, create.ErrInvalidDescription):
-			h.logger.Debug(
-				ctx,
-				"invalid command",
-				nil,
-				logger.String("field", "description"),
-				logger.String("reason", "invalid"),
-			)
-			responder.JSON(
-				w,
-				http.StatusBadRequest,
-				responder.ErrResponse{Message: "invalid request"},
-			)
+		case errors.Is(err, create.ErrTitleTooLong):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "title"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "title is too long"})
+			return
+		case errors.Is(err, create.ErrEmptyDescription):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "description"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "description is required"})
+			return
+		case errors.Is(err, create.ErrDescriptionTooLong):
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "description"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "description is too long"})
 			return
 		case errors.Is(err, create.ErrInvalidDueOption):
-			h.logger.Debug(
-				ctx,
-				"invalid command",
-				nil,
-				logger.String("field", "due_date"),
-				logger.String("reason", "invalid"),
-			)
-			responder.JSON(
-				w,
-				http.StatusBadRequest,
-				responder.ErrResponse{Message: "invalid request"},
-			)
+			h.logger.Debug(ctx, "invalid command", nil, logger.String("field", "due_date"))
+			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid due_date"})
 			return
-		//400系はDebugで返す。
-		case errors.Is(err, dtask.ErrEmptyTitle),
-			errors.Is(err, dtask.ErrTitleTooLong),
-			errors.Is(err, dtask.ErrEmptyDescription),
-			errors.Is(err, dtask.ErrDescriptionTooLong),
-			errors.Is(err, dtask.ErrInvalidDueOption):
-			h.logger.Debug(ctx, "domain validation failed", err)
-			responder.JSON(w, http.StatusBadRequest, responder.ErrResponse{Message: "invalid request"})
-			return
-		//domainエラー
 		default:
 			h.logger.Error(ctx, "create task failed", err)
 			responder.JSON(w, http.StatusInternalServerError, responder.ErrResponse{Message: "internal server error"})
@@ -135,7 +105,7 @@ func (h *CreateTaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type createRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	DueDate     int    `json:"due_date"` // 7/14/21/30
+	DueDate     int    `json:"due_date"`
 }
 
 type createResponse struct {

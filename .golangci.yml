@@ -1,0 +1,13 @@
+run:
+  timeout: 3m
+
+linters:
+  enable:
+    - errcheck
+    - staticcheck
+    - unused
+    - govet
+    - ineffassign
+    - gosimple
+
+#ciにおけるlintの設定。gofumpt（フォーマット)、bodyclose（HTTPレスポンスのClose忘れ）も検討。

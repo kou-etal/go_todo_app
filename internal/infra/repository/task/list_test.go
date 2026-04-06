@@ -81,8 +81,10 @@ func (s *stubQueryerExecer) NamedExecContext(
 	return nil, errors.New("stubQueryerExecuer.NamedExecContext: unexpected call")
 }
 
-// TaskRecord作成のヘルパー。
-// Goの慣習mustXxx=失敗してもエラー拾わない　テストデータ作成はエラー拾ったとこで意味ない。
+func (s *stubQueryerExecer) Rebind(query string) string {
+	return query
+}
+
 func mustRecord(id string, created time.Time, due time.Time) TaskRecord {
 	return TaskRecord{
 		ID:          id,
@@ -101,9 +103,10 @@ func TestRepository_List_defaultLimitAndSort(t *testing.T) {
 	t.Parallel()
 
 	qe := &stubQueryerExecer{}
-	repo := NewRepository(qe)
+	repo := New(qe)
 
 	_, _, err := repo.List(context.Background(), dtask.ListQuery{
+		UserID: "test-user-id",
 		Limit:  50,
 		Sort:   "created",
 		Cursor: nil,
@@ -116,7 +119,6 @@ func TestRepository_List_defaultLimitAndSort(t *testing.T) {
 		t.Fatalf("sql missing created order:\n%s", qe.gotSQL)
 	}
 
-	//dbLimit=q.Limit+1=51がargsの最後に入る
 	if len(qe.gotArgs) == 0 {
 		t.Fatalf("args is empty")
 	}
@@ -130,7 +132,7 @@ func TestRepository_List_createdCursor_buildsWhereAndArgs(t *testing.T) {
 	t.Parallel()
 
 	qe := &stubQueryerExecer{}
-	repo := NewRepository(qe)
+	repo := New(qe)
 
 	cur := &dtask.ListCursor{
 		Created: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
@@ -138,6 +140,7 @@ func TestRepository_List_createdCursor_buildsWhereAndArgs(t *testing.T) {
 	}
 
 	_, _, err := repo.List(context.Background(), dtask.ListQuery{
+		UserID: "test-user-id",
 		Limit:  10,
 		Sort:   dtask.SortCreated,
 		Cursor: cur,
@@ -146,34 +149,15 @@ func TestRepository_List_createdCursor_buildsWhereAndArgs(t *testing.T) {
 		t.Fatalf("List() unexpected error: %v", err)
 	}
 
-	if !strings.Contains(qe.gotSQL, "WHERE (created_at, id) < (?, ?)") {
+	if !strings.Contains(qe.gotSQL, "AND (created_at, id) < (?, ?)") {
 		t.Fatalf("sql missing created cursor where:\n%s", qe.gotSQL)
 	}
-	//created,id,limitの三つ。詳細確認はしない。
-	//TODO:と思ったけどこれはrepoの責務だから、もう一段だけ強くして詳細確認するべきかも
-	//qr.gotArgs[0] が cur.Created、qr.gotArgs[1] が cur.ID.Value()、qr.gotArgs[2] が 11
-	if len(qe.gotArgs) != 3 {
-		t.Fatalf("args len = %d, want 3 (created_at,id,limit)", len(qe.gotArgs))
+
+	if len(qe.gotArgs) != 4 {
+		t.Fatalf("args len = %d, want 4 (user_id,created_at,id,limit)", len(qe.gotArgs))
 	}
 }
 
-/*func TestRepository_List_invalidSort_returnsErr(t *testing.T) {
-	t.Parallel()
-
-	qr := &stubQueryer{}
-	repo := NewRepository(qr)
-
-	_, _, err := repo.List(context.Background(), dtask.ListQuery{
-		Limit:  10,
-		Sort:   "___invalid___",
-		Cursor: nil,
-	})
-	if !errors.Is(err, dtask.ErrInvalidSort) {
-		t.Fatalf("err = %v, want ErrInvalidSort", err)
-	}
-}
-*/
-//TODO:ここに異常なクエリ来ることはあり得ない。それがusecaseの契約。保険のクエリバリデーションまでテストするべきか。するべきらしい。
 func TestRepository_List_hasNext_trimsAndReturnsNextCursor(t *testing.T) {
 	t.Parallel()
 
@@ -181,7 +165,6 @@ func TestRepository_List_hasNext_trimsAndReturnsNextCursor(t *testing.T) {
 	created2 := time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC)
 	created3 := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
-	// Limit=2でrecords=3を返してhasNextを発火させる
 	qr := &stubQueryerExecer{
 		records: []TaskRecord{
 			mustRecord("id-3", created1, time.Time{}),
@@ -189,9 +172,10 @@ func TestRepository_List_hasNext_trimsAndReturnsNextCursor(t *testing.T) {
 			mustRecord("id-1", created3, time.Time{}),
 		},
 	}
-	repo := NewRepository(qr)
+	repo := New(qr)
 
 	tasks, next, err := repo.List(context.Background(), dtask.ListQuery{
+		UserID: "test-user-id",
 		Limit:  2,
 		Sort:   dtask.SortCreated,
 		Cursor: nil,
@@ -205,8 +189,7 @@ func TestRepository_List_hasNext_trimsAndReturnsNextCursor(t *testing.T) {
 	if next == nil {
 		t.Fatalf("next cursor should not be nil when hasNext")
 	}
-	//RecordToEntityも巻き込んでる。もしRecordToEntityががっつりロジック持ってるならば分けてテストあるいは固定値。
-	// 次カーソルは「返したtasksの最後」を使う
+
 	if !next.Created.Equal(tasks[1].CreatedAt()) {
 		t.Fatalf("next.Created = %v, want %v", next.Created, tasks[1].CreatedAt())
 	}

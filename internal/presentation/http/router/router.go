@@ -4,35 +4,36 @@ import (
 	"net/http"
 )
 
-/*type Deps struct {
-	TaskList *taskhandler.ListTasksHandler
-}*/
-
 type Deps struct {
-	Task TaskDeps
+	Task   TaskDeps
+	User   UserDeps
+	AuthMW func(http.Handler) http.Handler
 }
 
 type TaskDeps struct {
-	List http.Handler
+	List   http.Handler
+	Create http.Handler
+	Update http.Handler
+	Delete http.Handler
+}
+type UserDeps struct {
+	Register http.Handler
+	Login    http.Handler
+	Refresh  http.Handler
 }
 
-// http.Handlerはinterface
-// これによりtaskhandler "github.com/kou-etal/go_todo_app/internal/presentation/http/handler/task"が消え疎結合になった
 func New(deps Deps) http.Handler {
 	mux := http.NewServeMux()
 
-	// health
 	mux.Handle("/health", http.HandlerFunc(healthHandler))
 
-	// tasks
-	mux.Handle("/tasks", deps.Task.List)
-	//h := middleware.RequestID(mux)  middlewareのチェーンはここでやると汚い
+	mux.Handle("/tasks", deps.AuthMW(tasksHandler(deps.Task)))
+
+	mux.Handle("/tasks/{id}", deps.AuthMW(taskHandler(deps.Task)))
+
+	mux.Handle("/users", usersHandler(deps.User))
+	mux.Handle("/users/login", loginHandler(deps.User))
+	mux.Handle("/users/refresh", refreshHandler(deps.User))
 
 	return mux
-}
-
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }

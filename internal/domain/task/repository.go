@@ -3,6 +3,8 @@ package task
 import (
 	"context"
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 type ListSort string
@@ -21,6 +23,7 @@ type ListCursor struct {
 }
 
 type ListQuery struct {
+	UserID user.UserID
 	Limit  int
 	Sort   ListSort
 	Cursor *ListCursor
@@ -29,4 +32,7 @@ type ListQuery struct {
 type TaskRepository interface {
 	List(ctx context.Context, q ListQuery) ([]*Task, *ListCursor, error)
 	Store(ctx context.Context, t *Task) error
-} //repositoryはinterface定義だけでqueryとかはlist.goに分けるべき
+	Update(ctx context.Context, t *Task) error
+	FindByID(ctx context.Context, id TaskID) (*Task, error)
+	Delete(ctx context.Context, id TaskID, version uint64) error
+}

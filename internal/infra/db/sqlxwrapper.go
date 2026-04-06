@@ -30,6 +30,7 @@ type Queryer interface {
 type QueryerExecer interface {
 	Queryer
 	Execer
+	Rebind(query string) string
 }
 
 var (

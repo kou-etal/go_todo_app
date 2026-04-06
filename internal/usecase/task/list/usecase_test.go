@@ -26,6 +26,16 @@ func (s *stubRepo) Store(ctx context.Context, t *dtask.Task) error {
 	return nil //TODO:テスト
 }
 
+func (s *stubRepo) Update(ctx context.Context, t *dtask.Task) error {
+	return nil
+}
+func (s *stubRepo) FindByID(ctx context.Context, id dtask.TaskID) (*dtask.Task, error) {
+	return nil, nil
+}
+func (s *stubRepo) Delete(ctx context.Context, id dtask.TaskID, version uint64) error {
+	return nil
+}
+
 var _ dtask.TaskRepository = (*stubRepo)(nil)
 
 // テストは相互作用ないならCのテストいらない。一つずつでいい。
@@ -41,6 +51,7 @@ func TestUsecase_Do_callsRepoWithNormalizedLimit(t *testing.T) {
 
 	//sort/limit/cursor全部成功する値、limit正規化
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  0,
 		Sort:   "created",
 		Cursor: "",
@@ -77,6 +88,7 @@ func TestUsecase_Do_callsRepoWithNormalizedSort(t *testing.T) {
 
 	//sort/limit/cursor全部成功する値、sort正規化
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  5,
 		Sort:   "",
 		Cursor: "",
@@ -110,6 +122,7 @@ func TestUsecase_Do_invalidLimit_doesNotCallRepo(t *testing.T) {
 	u := New(repo)
 
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  -1,
 		Sort:   "created",
 		Cursor: "",
@@ -131,6 +144,7 @@ func TestUsecase_Do_invalidSort_doesNotCallRepo(t *testing.T) {
 	u := New(repo)
 
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  10,
 		Sort:   "___invalid___",
 		Cursor: "",
@@ -152,6 +166,7 @@ func TestUsecase_Do_invalidCursor_doesNotCallRepo(t *testing.T) {
 	u := New(repo)
 
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  10,
 		Sort:   "",
 		Cursor: "broken-cursor-string",
@@ -182,6 +197,7 @@ func TestUsecase_Do_Encodedecode_Callrepo(t *testing.T) {
 	u := New(repo)
 
 	q := Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  10,
 		Sort:   "created",
 		Cursor: token,
@@ -198,9 +214,6 @@ func TestUsecase_Do_Encodedecode_Callrepo(t *testing.T) {
 		t.Fatalf("repo query cursor is nil, want non-nil")
 	}
 
-	/*if repo.gotQuery.cursor != c{
-		t.Fatalf(": %v", err)
-	}*/
 } //TODO:これencode decode含めることによって2つともバグってた場合通る可能性あり。decodeは固有値を持たせて試すべきか
 
 func TestUsecase_Do_nextCursorGenerated(t *testing.T) {
@@ -210,7 +223,7 @@ func TestUsecase_Do_nextCursorGenerated(t *testing.T) {
 		Created:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 		DueIsNull: true,
 		ID:        dtask.NewTaskID(),
-	} //next定義しないとDoはnextcursor作らない。これは出力のcursor
+	}
 
 	repo := &stubRepo{
 		tasks: nil,
@@ -219,14 +232,15 @@ func TestUsecase_Do_nextCursorGenerated(t *testing.T) {
 	u := New(repo)
 
 	res, err := u.Do(context.Background(), Query{
+		UserID: "00000000-0000-0000-0000-000000000001",
 		Limit:  10,
 		Sort:   "created",
-		Cursor: "", //入力のcursor
+		Cursor: "",
 	})
 	if err != nil {
 		t.Fatalf("Do() unexpected error: %v", err)
 	}
 	if res.NextCursor == "" {
 		t.Fatalf("NextCursor should not be empty when repo returns next")
-	} //cursorの中身まではテストしてない。それはcursor.goのテスト責務
+	}
 }

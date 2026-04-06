@@ -1,12 +1,15 @@
 package task
 
 import (
-	"errors"
 	"time"
+
+	"github.com/kou-etal/go_todo_app/internal/clock"
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 )
 
 type Task struct {
-	id          TaskID //学習用メモ　ここでDBとのマッピング定義するとdomainにDB都合入って良くない。
+	id          TaskID
+	userID      user.UserID
 	title       TaskTitle
 	description TaskDescription
 	status      TaskStatus
@@ -18,9 +21,8 @@ type Task struct {
 
 type Tasks []*Task
 
-//TODO:Tasksを定義するならば定義に意味を持たせるようなメソッドをタスクに持たせる。ただ短いからTasksは微妙。
-
 func (t *Task) ID() TaskID                   { return t.id }
+func (t *Task) UserID() user.UserID          { return t.userID }
 func (t *Task) Title() TaskTitle             { return t.title }
 func (t *Task) Description() TaskDescription { return t.description }
 func (t *Task) Status() TaskStatus           { return t.status }
@@ -31,44 +33,38 @@ func (t *Task) Version() uint64              { return t.version }
 
 func (t *Task) ChangeTitle(newTitle TaskTitle, now time.Time) {
 	t.title = newTitle
-	t.touch(now)
+	t.updateTime(now)
 }
 func (t *Task) ChangeDescription(newDesc TaskDescription, now time.Time) {
 	t.description = newDesc
-	t.touch(now)
+	t.updateTime(now)
+}
+func (t *Task) ChangeDueDate(newDue DueDate, now time.Time) {
+	t.dueDate = newDue
+	t.updateTime(now)
 }
 
 func (t *Task) ChangeStatus(next TaskStatus, now time.Time) error {
-	//TODO:状態遷移ルールが弱い.canChangeStatusではなくここで定義する。
 	if t.status == StatusDone {
-		return errors.New("tmp")
+		return ErrStatusChangeDone
 	}
 
 	t.status = next
-	t.touch(now)
+	t.updateTime(now)
 	return nil
 }
 
 func (t *Task) Reschedule(newDue DueDate, now time.Time) {
-	//TODO:これも状態遷移系。
+
 	t.dueDate = newDue
-	t.touch(now)
+	t.updateTime(now)
 }
 
-// MarkDoneに意味を持たせるならばchangestatusと分離
 func (t *Task) MarkDone(now time.Time) error {
 	return t.ChangeStatus(StatusDone, now)
 }
 
-func (t *Task) touch(now time.Time) {
-	//TODO:versionの操作はrepo層に任せる
-	n := normalizeTime(now)
-	if n.After(t.updatedAt) {
-		t.updatedAt = n
-		t.version++
-	}
-}
-
-func normalizeTime(t time.Time) time.Time {
-	return t.UTC().Truncate(time.Second)
+func (t *Task) updateTime(now time.Time) {
+	n := clock.NormalizeTime(now)
+	t.updatedAt = n
 }
