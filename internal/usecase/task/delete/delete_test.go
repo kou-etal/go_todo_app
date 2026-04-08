@@ -33,7 +33,7 @@ type mockDeps struct {
 	taskEventRepo taskevent.TaskEventRepository
 }
 
-func (m *mockDeps) TaskRepo() dtask.TaskRepository              { return m.taskRepo }
+func (m *mockDeps) TaskRepo() dtask.TaskRepository               { return m.taskRepo }
 func (m *mockDeps) TaskEventRepo() taskevent.TaskEventRepository { return m.taskEventRepo }
 
 // --- mock task repo ---
@@ -62,14 +62,14 @@ func (m *mockTaskRepo) Delete(_ context.Context, id dtask.TaskID, version uint64
 func (m *mockTaskRepo) List(_ context.Context, _ dtask.ListQuery) ([]*dtask.Task, *dtask.ListCursor, error) {
 	return nil, nil, nil
 }
-func (m *mockTaskRepo) Store(_ context.Context, _ *dtask.Task) error   { return nil }
-func (m *mockTaskRepo) Update(_ context.Context, _ *dtask.Task) error  { return nil }
+func (m *mockTaskRepo) Store(_ context.Context, _ *dtask.Task) error  { return nil }
+func (m *mockTaskRepo) Update(_ context.Context, _ *dtask.Task) error { return nil }
 
 // --- mock event repo ---
 
 type mockEventRepo struct {
-	insertErr    error
-	insertCalled bool
+	insertErr     error
+	insertCalled  bool
 	insertedEvent *taskevent.TaskEvent
 }
 
