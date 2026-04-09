@@ -16,10 +16,12 @@ FROM debian:bookworm-slim as deploy
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -r -s /bin/false appuser
 
 COPY --from=deploy-builder /app/app .
 
+USER appuser
 CMD ["./app"]
 
 # ---------------------------------------------------

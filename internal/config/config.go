@@ -1,6 +1,8 @@
 package config
 
 import (
+	"errors"
+
 	"github.com/caarlos0/env/v6"
 )
 
@@ -25,6 +27,9 @@ func New() (*Config, error) {
 	cfg := &Config{}
 	if err := env.Parse(cfg); err != nil {
 		return nil, err
+	}
+	if cfg.Env != "dev" && cfg.JWTSecret == "dev-secret-change-me" {
+		return nil, errors.New("TODO_JWT_SECRET must be set in non-dev environment")
 	}
 	return cfg, nil
 }

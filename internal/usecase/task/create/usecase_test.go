@@ -9,6 +9,7 @@ import (
 
 	taskevent "github.com/kou-etal/go_todo_app/internal/domain/event"
 	dtask "github.com/kou-etal/go_todo_app/internal/domain/task"
+	"github.com/kou-etal/go_todo_app/internal/domain/user"
 	usetx "github.com/kou-etal/go_todo_app/internal/usecase/tx"
 )
 
@@ -51,7 +52,7 @@ func (m *mockTaskRepo) FindByID(_ context.Context, _ dtask.TaskID) (*dtask.Task,
 	return nil, nil
 }
 func (m *mockTaskRepo) Update(_ context.Context, _ *dtask.Task) error         { return nil }
-func (m *mockTaskRepo) Delete(_ context.Context, _ dtask.TaskID, _ uint64) error { return nil }
+func (m *mockTaskRepo) Delete(_ context.Context, _ dtask.TaskID, _ user.UserID, _ uint64) error { return nil }
 func (m *mockTaskRepo) List(_ context.Context, _ dtask.ListQuery) ([]*dtask.Task, *dtask.ListCursor, error) {
 	return nil, nil, nil
 }

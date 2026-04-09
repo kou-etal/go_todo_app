@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     env_file: .env.prod
     command: server /data --console-address ":9001"
     volumes:
@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     depends_on:
       - minio
     env_file: .env.prod
@@ -47,18 +47,18 @@ services:
       "
 
   pushgateway:
-    image: prom/pushgateway:latest
+    image: prom/pushgateway:v1.11.2
     restart: unless-stopped
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.11.1
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     restart: unless-stopped
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.149.0
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
       - ./docker/otel-collector/config.yaml:/etc/otelcol/config.yaml
@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.6.8
     command: ["-config.file=/etc/loki/loki.yaml"]
     volumes:
       - ./docker/loki/loki.yaml:/etc/loki/loki.yaml
@@ -83,7 +83,7 @@ services:
     restart: unless-stopped
 
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:3.6.8
     command: ["-config.file=/etc/promtail/config.yaml"]
     volumes:
       - ./docker/promtail/config.yaml:/etc/promtail/config.yaml
@@ -95,7 +95,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:12.4.2
     ports:
       - "127.0.0.1:3000:3000"
     env_file: .env.prod

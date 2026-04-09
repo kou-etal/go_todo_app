@@ -53,7 +53,7 @@ func (m *mockTaskRepo) FindByID(_ context.Context, id dtask.TaskID) (*dtask.Task
 	return m.findTask, m.findErr
 }
 
-func (m *mockTaskRepo) Delete(_ context.Context, id dtask.TaskID, version uint64) error {
+func (m *mockTaskRepo) Delete(_ context.Context, id dtask.TaskID, _ user.UserID, version uint64) error {
 	m.deleteCalled = true
 	m.deleteID = id
 	return m.deleteErr
