@@ -78,7 +78,7 @@ type mockTaskRepo struct {
 
 func (m *mockTaskRepo) Store(_ context.Context, _ *dtask.Task) error { return m.storeErr }
 func (m *mockTaskRepo) Update(_ context.Context, _ *dtask.Task) error { return m.updateErr }
-func (m *mockTaskRepo) Delete(_ context.Context, _ dtask.TaskID, _ uint64) error {
+func (m *mockTaskRepo) Delete(_ context.Context, _ dtask.TaskID, _ user.UserID, _ uint64) error {
 	return m.deleteErr
 }
 func (m *mockTaskRepo) FindByID(_ context.Context, _ dtask.TaskID) (*dtask.Task, error) {

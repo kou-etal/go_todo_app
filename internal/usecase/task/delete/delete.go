@@ -83,7 +83,7 @@ func (u *Usecase) Do(ctx context.Context, cmd Command) error {
 			return err
 		}
 		//楽観ロックはrepoに寄せる。
-		if err := deps.TaskRepo().Delete(ctx, id, cmd.Version); err != nil {
+		if err := deps.TaskRepo().Delete(ctx, id, userID, cmd.Version); err != nil {
 			return err
 		}
 		return nil

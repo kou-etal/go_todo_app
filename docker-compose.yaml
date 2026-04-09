@@ -46,7 +46,7 @@ services:
       - "33306:3306"
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: minio
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -60,7 +60,7 @@ services:
 
   # MinIO 起動後にバケットを自動作成する初期化コンテナ
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     depends_on:
       - minio
     entrypoint: >
@@ -70,13 +70,13 @@ services:
       "
 
   pushgateway:
-    image: prom/pushgateway:latest
+    image: prom/pushgateway:v1.11.2
     container_name: pushgateway
     ports:
       - "9091:9091"
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.11.1
     container_name: prometheus
     ports:
       - "9092:9090"
@@ -85,7 +85,7 @@ services:
       - prometheus-data:/prometheus
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.149.0
     container_name: otel-collector
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
@@ -106,7 +106,7 @@ services:
       - "3200:3200"
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.6.8
     container_name: loki
     command: ["-config.file=/etc/loki/loki.yaml"]
     volumes:
@@ -116,7 +116,7 @@ services:
       - "3100:3100"
 
   promtail:
-    image: grafana/promtail:latest
+    image: grafana/promtail:3.6.8
     container_name: promtail
     command: ["-config.file=/etc/promtail/config.yaml"]
     volumes:
@@ -128,7 +128,7 @@ services:
       - loki
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:12.4.2
     container_name: grafana
     ports:
       - "3000:3000"
