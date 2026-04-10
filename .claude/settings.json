@@ -1,3 +1,13 @@
 {
-  "effortLevel": "high"
+  "effortLevel": "high",
+  "sandbox": {
+    "enabled": true,
+    "allowUnsandboxedCommands": false
+  },
+    "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  }
 }
