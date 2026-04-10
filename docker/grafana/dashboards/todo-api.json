@@ -6,9 +6,17 @@
   "links": [],
   "panels": [
     {
+      "type": "row",
+      "title": "Overview",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": []
+    },
+    {
       "title": "RPS",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 0, "y": 0 },
+      "gridPos": { "h": 4, "w": 5, "x": 0, "y": 1 },
       "targets": [
         { "expr": "sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[1m]))", "refId": "A" }
       ],
@@ -31,9 +39,9 @@
     {
       "title": "Error Rate",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 5, "y": 0 },
+      "gridPos": { "h": 4, "w": 5, "x": 5, "y": 1 },
       "targets": [
-        { "expr": "100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "refId": "A" }
+        { "expr": "(100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / (sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m])) > 0)) or on() vector(0)", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -47,8 +55,7 @@
               { "color": "yellow", "value": 0.1 },
               { "color": "red", "value": 1 }
             ]
-          },
-          "noValue": "0"
+          }
         },
         "overrides": []
       },
@@ -61,11 +68,11 @@
       }
     },
     {
-      "title": "p95 Latency",
+      "title": "p95 Latency (API)",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 10, "y": 0 },
+      "gridPos": { "h": 4, "w": 5, "x": 10, "y": 1 },
       "targets": [
-        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m])) by (le))", "refId": "A" }
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(tasks.*)\"}[5m])) by (le))", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -94,9 +101,9 @@
     {
       "title": "Availability",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 15, "y": 0 },
+      "gridPos": { "h": 4, "w": 5, "x": 15, "y": 1 },
       "targets": [
-        { "expr": "100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"[23]..\"}[5m])) / sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "refId": "A" }
+        { "expr": "(100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status!~\"5..\"}[5m])) / (sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m])) > 0)) or on() vector(100)", "refId": "A" }
       ],
       "fieldConfig": {
         "defaults": {
@@ -112,8 +119,7 @@
               { "color": "yellow", "value": 99 },
               { "color": "green", "value": 99.9 }
             ]
-          },
-          "noValue": "100"
+          }
         },
         "overrides": []
       },
@@ -128,7 +134,7 @@
     {
       "title": "In Flight",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
       "targets": [
         { "expr": "http_requests_in_flight{job=\"todo-api\"}", "refId": "A" }
       ],
@@ -157,147 +163,172 @@
       }
     },
     {
-      "title": "Success Rate by Path",
-      "type": "bargauge",
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 4 },
-      "targets": [
-        { "expr": "100 * sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"[23]..\"}[5m])) / sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "{{path}}", "refId": "A" }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 2,
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": 99 },
-              { "color": "green", "value": 99.9 }
-            ]
+      "type": "row",
+      "title": "Traffic & Errors",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 200,
+      "panels": [
+        {
+          "title": "RPS by Path",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+          "targets": [
+            { "expr": "sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "total", "refId": "A" },
+            { "expr": "sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{path}}", "refId": "B" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+        },
+        {
+          "title": "Error Ratio (4xx % / 5xx %)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+          "targets": [
+            { "expr": "100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"4..\"}[5m])) / sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "4xx %", "refId": "A" },
+            { "expr": "100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "5xx %", "refId": "B" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              },
+              "custom": { "thresholdsStyle": { "mode": "line" } }
+            },
+            "overrides": []
           }
         },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "horizontal",
-        "displayMode": "gradient",
-        "showUnfilled": true,
-        "valueMode": "color",
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }
-      }
-    },
-    {
-      "title": "RPS (Requests Per Second)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
-      "targets": [
-        { "expr": "sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "total", "refId": "A" },
-        { "expr": "sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{path}}", "refId": "B" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
-    },
-    {
-      "title": "Error Ratio (4xx % / 5xx %)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
-      "targets": [
-        { "expr": "100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"4..\"}[5m])) / sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "4xx %", "refId": "A" },
-        { "expr": "100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "5xx %", "refId": "B" }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
-            ]
+        {
+          "title": "Status Code Distribution",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+          "targets": [
+            { "expr": "sum by (status) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{status}}", "refId": "A" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+        },
+        {
+          "title": "Server Success Rate by Path",
+          "type": "bargauge",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+          "targets": [
+            { "expr": "(100 * sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status!~\"5..\"}[5m])) / (sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m])) > 0)) and (sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m])) > 0.001)", "legendFormat": "{{path}}", "refId": "A" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "max": 100,
+              "decimals": 2,
+              "color": { "mode": "thresholds" },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "yellow", "value": 99 },
+                  { "color": "green", "value": 99.9 }
+                ]
+              }
+            },
+            "overrides": []
           },
-          "custom": {
-            "thresholdsStyle": { "mode": "line" }
+          "options": {
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true,
+            "valueMode": "color",
+            "minVizHeight": 20,
+            "minVizWidth": 0,
+            "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" }
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Latency",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "id": 300,
+      "panels": [
+        {
+          "title": "Latency (p50 / p95 / p99) - API Only",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+          "targets": [
+            { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*)\"}[5m])) by (le))", "legendFormat": "p50", "refId": "A" },
+            { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*)\"}[5m])) by (le))", "legendFormat": "p95", "refId": "B" },
+            { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*)\"}[5m])) by (le))", "legendFormat": "p99", "refId": "C" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+        },
+        {
+          "title": "Latency by Path (p95)",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+          "targets": [
+            { "expr": "histogram_quantile(0.95, sum by (le, path) (rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m])))", "legendFormat": "{{path}}", "refId": "A" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Deep Dive",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "id": 400,
+      "panels": [
+        {
+          "title": "RPS by Method + Path",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "targets": [
+            { "expr": "sum by (method, path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{method}} {{path}}", "refId": "A" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
+        },
+        {
+          "title": "5xx Ratio by Path",
+          "type": "timeseries",
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "targets": [
+            { "expr": "100 * sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "{{path}}", "refId": "A" }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "decimals": 2,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              },
+              "custom": { "thresholdsStyle": { "mode": "line" } }
+            },
+            "overrides": []
           }
         },
-        "overrides": []
-      }
-    },
-    {
-      "title": "Latency (p50 / p95 / p99)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
-      "targets": [
-        { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m])) by (le))", "legendFormat": "p50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m])) by (le))", "legendFormat": "p95", "refId": "B" },
-        { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m])) by (le))", "legendFormat": "p99", "refId": "C" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
-    },
-    {
-      "title": "Latency by Path (p95)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
-      "targets": [
-        { "expr": "histogram_quantile(0.95, sum by (le, path) (rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m])))", "legendFormat": "{{path}}", "refId": "A" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
-    },
-    {
-      "title": "Requests In Flight",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
-      "targets": [
-        { "expr": "http_requests_in_flight{job=\"todo-api\"}", "legendFormat": "in flight", "refId": "A" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
-    },
-    {
-      "title": "Status Code Distribution",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
-      "targets": [
-        { "expr": "sum by (status) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{status}}", "refId": "A" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
-    },
-    {
-      "title": "RPS by Method + Path",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 34 },
-      "targets": [
-        { "expr": "sum by (method, path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{method}} {{path}}", "refId": "A" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] }
-    },
-    {
-      "title": "5xx Ratio by Path",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 34 },
-      "targets": [
-        { "expr": "100 * sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "{{path}}", "refId": "A" }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
-            ]
-          },
-          "custom": {
-            "thresholdsStyle": { "mode": "line" }
-          }
-        },
-        "overrides": []
-      }
+        {
+          "title": "Requests In Flight (timeseries)",
+          "type": "timeseries",
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 16 },
+          "targets": [
+            { "expr": "http_requests_in_flight{job=\"todo-api\"}", "legendFormat": "in flight", "refId": "A" }
+          ],
+          "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+        }
+      ]
     }
   ],
   "schemaVersion": 39,
