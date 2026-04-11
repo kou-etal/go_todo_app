@@ -291,7 +291,7 @@ groups:
               refId: A
               queryType: instant
               editorMode: code
-              expr: 'sum(count_over_time({container="/go_todo_app-app-1"} | json | level="ERROR" [5m]))'
+              expr: 'sum(count_over_time({container=~"/(go_todo_app|todo-app)-app-1"} | json | level="ERROR" [5m]))'
           - refId: C
             relativeTimeRange:
               from: 0
