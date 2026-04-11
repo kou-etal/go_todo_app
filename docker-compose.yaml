@@ -134,6 +134,8 @@ services:
       - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
+      DISCORD_WEBHOOK_CRITICAL_URL: ${DISCORD_WEBHOOK_CRITICAL_URL}
+      DISCORD_WEBHOOK_WARNING_URL: ${DISCORD_WEBHOOK_WARNING_URL}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./docker/grafana/provisioning:/etc/grafana/provisioning

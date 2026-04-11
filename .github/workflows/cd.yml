@@ -248,6 +248,8 @@ jobs:
               "METRICS_PORT=${{ vars.METRICS_PORT }}" \
               "GF_SECURITY_ADMIN_USER=${{ secrets.GF_ADMIN_USER }}" \
               "GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_ADMIN_PASSWORD }}" \
+              "DISCORD_WEBHOOK_CRITICAL_URL=${{ secrets.DISCORD_WEBHOOK_CRITICAL_URL }}" \
+              "DISCORD_WEBHOOK_WARNING_URL=${{ secrets.DISCORD_WEBHOOK_WARNING_URL }}" \
               "PORT=8080" \
               > "${DEPLOY_DIR}/.env.prod.tmp"
 

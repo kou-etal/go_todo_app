@@ -1,0 +1,39 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: discord-critical
+    receivers:
+      - uid: discord-critical
+        type: discord
+        settings:
+          url: $DISCORD_WEBHOOK_CRITICAL_URL
+          use_discord_username: true
+          avatar_url: https://grafana.com/static/img/fav32.png
+          message: |
+            :rotating_light: **CRITICAL** - `{{ .CommonLabels.alertname }}`
+            Service: `{{ .CommonLabels.service }}`
+            {{ range .Alerts }}
+            > {{ .Annotations.summary }}
+            > {{ .Annotations.description }}
+            {{ end }}
+            <{{ .ExternalURL }}/alerting/list>
+        disableResolveMessage: false
+
+  - orgId: 1
+    name: discord-warning
+    receivers:
+      - uid: discord-warning
+        type: discord
+        settings:
+          url: $DISCORD_WEBHOOK_WARNING_URL
+          use_discord_username: true
+          avatar_url: https://grafana.com/static/img/fav32.png
+          message: |
+            :warning: **WARNING** - `{{ .CommonLabels.alertname }}`
+            Service: `{{ .CommonLabels.service }}`
+            {{ range .Alerts }}
+            > {{ .Annotations.summary }}
+            > {{ .Annotations.description }}
+            {{ end }}
+            <{{ .ExternalURL }}/alerting/list>
+        disableResolveMessage: false
