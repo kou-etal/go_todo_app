@@ -17,6 +17,9 @@
       "title": "RPS",
       "type": "stat",
       "gridPos": { "h": 4, "w": 5, "x": 0, "y": 1 },
+      "links": [
+        { "title": "View Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+      ],
       "targets": [
         { "expr": "sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[1m]))", "refId": "A" }
       ],
@@ -40,6 +43,9 @@
       "title": "Error Rate",
       "type": "stat",
       "gridPos": { "h": 4, "w": 5, "x": 5, "y": 1 },
+      "links": [
+        { "title": "View Error Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%20%7C%20json%20%7C%20level%3D%5C%22error%5C%22%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+      ],
       "targets": [
         { "expr": "(100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / (sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m])) > 0)) or on() vector(0)", "refId": "A" }
       ],
@@ -71,6 +77,9 @@
       "title": "p95 Latency (API)",
       "type": "stat",
       "gridPos": { "h": 4, "w": 5, "x": 10, "y": 1 },
+      "links": [
+        { "title": "View Traces", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7Bresource.service.name%3D%5C%22todo-api%5C%22%7D%22,%22limit%22:20%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+      ],
       "targets": [
         { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(tasks.*)\"}[5m])) by (le))", "refId": "A" }
       ],
@@ -173,6 +182,9 @@
           "title": "RPS by Path",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+          "links": [
+            { "title": "View Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+          ],
           "targets": [
             { "expr": "sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "total", "refId": "A" },
             { "expr": "sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{path}}", "refId": "B" }
@@ -183,6 +195,9 @@
           "title": "Error Ratio (4xx % / 5xx %)",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+          "links": [
+            { "title": "View Error Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%20%7C%20json%20%7C%20level%3D%5C%22error%5C%22%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+          ],
           "targets": [
             { "expr": "100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"4..\"}[5m])) / sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "4xx %", "refId": "A" },
             { "expr": "100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "5xx %", "refId": "B" }
@@ -208,6 +223,9 @@
           "title": "Status Code Distribution",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+          "links": [
+            { "title": "View Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+          ],
           "targets": [
             { "expr": "sum by (status) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{status}}", "refId": "A" }
           ],
@@ -261,6 +279,9 @@
           "title": "Latency (p50 / p95 / p99) - API Only",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+          "links": [
+            { "title": "View Traces", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7Bresource.service.name%3D%5C%22todo-api%5C%22%7D%22,%22limit%22:20%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+          ],
           "targets": [
             { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*)\"}[5m])) by (le))", "legendFormat": "p50", "refId": "A" },
             { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*)\"}[5m])) by (le))", "legendFormat": "p95", "refId": "B" },
@@ -272,6 +293,9 @@
           "title": "Latency by Path (p95)",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+          "links": [
+            { "title": "View Traces", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7Bresource.service.name%3D%5C%22todo-api%5C%22%7D%22,%22limit%22:20%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+          ],
           "targets": [
             { "expr": "histogram_quantile(0.95, sum by (le, path) (rate(http_request_duration_seconds_bucket{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m])))", "legendFormat": "{{path}}", "refId": "A" }
           ],
@@ -290,6 +314,9 @@
           "title": "RPS by Method + Path",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "links": [
+            { "title": "View Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+          ],
           "targets": [
             { "expr": "sum by (method, path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(health|tasks.*|users.*)\"}[5m]))", "legendFormat": "{{method}} {{path}}", "refId": "A" }
           ],
@@ -299,6 +326,9 @@
           "title": "5xx Ratio by Path",
           "type": "timeseries",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "links": [
+            { "title": "View Error Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%20%7C%20json%20%7C%20level%3D%5C%22error%5C%22%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
+          ],
           "targets": [
             { "expr": "100 * sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status=~\"5..\"}[5m])) / sum by (path) (rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m]))", "legendFormat": "{{path}}", "refId": "A" }
           ],
