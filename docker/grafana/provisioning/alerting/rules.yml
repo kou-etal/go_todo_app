@@ -1,0 +1,325 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: http_api_slo
+    folder: HTTP API
+    interval: 1m
+    rules:
+      # =====================================================================
+      # #1 HTTPErrorRateCritical
+      #    5xx rate > 5% AND 5xx count >= 5 (last 5m)
+      # =====================================================================
+      - uid: http-error-rate-critical
+        title: HTTP 5xx Error Rate (critical)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              editorMode: code
+              expr: |
+                (
+                  sum(rate(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)",status=~"5.."}[5m]))
+                  /
+                  (sum(rate(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)"}[5m])) > 0)
+                ) or on() vector(0)
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: B
+              instant: true
+              editorMode: code
+              expr: |
+                sum(increase(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)",status=~"5.."}[5m]))
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: math
+              expression: $A > 0.05 && $B > 5
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "HTTP 5xx error rate above 5% (critical)"
+          description: |
+            5xx rate is {{ with $values.A }}{{ .Value | humanizePercentage }}{{ else }}N/A{{ end }} with {{ with $values.B }}{{ .Value }}{{ else }}0{{ end }} errors in the last 5 minutes.
+        labels:
+          severity: critical
+          service: todo-api
+
+      # =====================================================================
+      # #2 HTTPErrorRateWarning
+      #    5xx rate > 1% AND 5xx count >= 5 (last 5m)
+      # =====================================================================
+      - uid: http-error-rate-warning
+        title: HTTP 5xx Error Rate (warning)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              editorMode: code
+              expr: |
+                (
+                  sum(rate(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)",status=~"5.."}[5m]))
+                  /
+                  (sum(rate(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)"}[5m])) > 0)
+                ) or on() vector(0)
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: B
+              instant: true
+              editorMode: code
+              expr: |
+                sum(increase(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)",status=~"5.."}[5m]))
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: math
+              expression: $A > 0.01 && $B > 5
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: "HTTP 5xx error rate above 1% (warning)"
+          description: |
+            5xx rate is {{ with $values.A }}{{ .Value | humanizePercentage }}{{ else }}N/A{{ end }} with {{ with $values.B }}{{ .Value }}{{ else }}0{{ end }} errors in the last 5 minutes.
+        labels:
+          severity: warning
+          service: todo-api
+
+      # =====================================================================
+      # #3 HTTPLatencyP95High
+      #    p95 latency > 500ms over /tasks.* (users.*/login excluded)
+      # =====================================================================
+      - uid: http-latency-p95-high
+        title: HTTP Latency p95 High
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              editorMode: code
+              expr: |
+                histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="todo-api",path=~"/(tasks.*)"}[5m])) by (le)) or on() vector(0)
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0.5]
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+                    params: []
+                  type: query
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "HTTP p95 latency above 500ms (warning)"
+          description: |
+            p95 latency on /tasks.* is {{ with $values.A }}{{ .Value | humanizeDuration }}{{ else }}N/A{{ end }}.
+        labels:
+          severity: warning
+          service: todo-api
+
+      # =====================================================================
+      # #4 HTTPAvailabilityLow
+      #    non-5xx / total < 99% AND 30m total requests > 30 (traffic gate)
+      # =====================================================================
+      - uid: http-availability-low
+        title: HTTP Availability Low
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              editorMode: code
+              expr: |
+                (
+                  sum(rate(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)",status!~"5.."}[30m]))
+                  /
+                  (sum(rate(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)"}[30m])) > 0)
+                ) or on() vector(1)
+          - refId: B
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: B
+              instant: true
+              editorMode: code
+              expr: |
+                sum(increase(http_requests_total{job="todo-api",path=~"/(tasks.*|users.*)"}[30m]))
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: math
+              expression: $A < 0.99 && $B > 30
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        annotations:
+          summary: "HTTP availability below 99% (critical)"
+          description: |
+            Availability is {{ with $values.A }}{{ .Value | humanizePercentage }}{{ else }}N/A{{ end }} over {{ with $values.B }}{{ .Value }}{{ else }}0{{ end }} requests in 30 minutes.
+        labels:
+          severity: critical
+          service: todo-api
+
+      # =====================================================================
+      # #5 TODOAPIDown (paused - enable after release)
+      #    up{job="todo-api"} == 0
+      # =====================================================================
+      - uid: todo-api-down
+        title: TODO API Down
+        isPaused: true
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              editorMode: code
+              expr: up{job="todo-api"}
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: lt
+                    params: [1]
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+                    params: []
+                  type: query
+        noDataState: Alerting
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "TODO API is down (critical)"
+          description: >
+            Prometheus cannot scrape the todo-api target ({{ $labels.instance }}).
+        labels:
+          severity: critical
+          service: todo-api
+
+  - orgId: 1
+    name: logs_alerts
+    folder: HTTP API
+    interval: 1m
+    rules:
+      # =====================================================================
+      # #6 LokiErrorLogSpike
+      #    error log count > 10 over last 5m
+      # =====================================================================
+      - uid: loki-error-log-spike
+        title: Error Log Spike (>10 / 5m)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: instant
+              editorMode: code
+              expr: 'sum(count_over_time({container="/go_todo_app-app-1"} | json | level="error" [5m]))'
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [10]
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+                    params: []
+                  type: query
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: "Error log spike (warning)"
+          description: |
+            {{ with $values.A }}{{ .Value }}{{ else }}0{{ end }} error log lines observed in the last 5 minutes.
+        labels:
+          severity: warning
+          service: todo-api
