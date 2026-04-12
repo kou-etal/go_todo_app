@@ -266,6 +266,11 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
 
+            # grafana の provisioning (rules/contactpoints/policies/dashboards/datasources) は
+            # bind mount なので docker compose up -d では reload されない。
+            # 毎回強制 restart で確実に最新設定を適用する。
+            docker compose -f docker-compose.prod.yml restart grafana
+
             # ヘルスチェック
             for i in $(seq 1 15); do
               if curl -sf http://localhost:18000/health > /dev/null 2>&1; then
