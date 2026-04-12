@@ -16,7 +16,7 @@
     {
       "title": "RPS",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 0, "y": 1 },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
       "links": [
         { "title": "View Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
       ],
@@ -42,7 +42,7 @@
     {
       "title": "Error Rate",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 5, "y": 1 },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
       "links": [
         { "title": "View Error Logs", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22expr%22:%22%7Bcontainer%3D%5C%22%2Fgo_todo_app-app-1%5C%22%7D%20%7C%20json%20%7C%20level%3D%5C%22error%5C%22%22,%22refId%22:%22A%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
       ],
@@ -76,7 +76,7 @@
     {
       "title": "p95 Latency (API)",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 10, "y": 1 },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
       "links": [
         { "title": "View Traces", "url": "/explore?orgId=1&left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7Bresource.service.name%3D%5C%22todo-api%5C%22%7D%22,%22limit%22:20%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D", "targetBlank": false }
       ],
@@ -110,7 +110,7 @@
     {
       "title": "Availability",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 15, "y": 1 },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
       "targets": [
         { "expr": "(100 * sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\",status!~\"5..\"}[5m])) / (sum(rate(http_requests_total{job=\"todo-api\",path=~\"/(tasks.*|users.*)\"}[5m])) > 0)) or on() vector(100)", "refId": "A" }
       ],
@@ -143,7 +143,7 @@
     {
       "title": "In Flight",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
       "targets": [
         { "expr": "http_requests_in_flight{job=\"todo-api\"}", "refId": "A" }
       ],
@@ -158,6 +158,39 @@
               { "color": "green", "value": null },
               { "color": "yellow", "value": 10 },
               { "color": "red", "value": 30 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "title": "DB Pool Usage",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "targets": [
+        { "expr": "100 * go_sql_in_use_connections{db_name=\"todo_db\"} / go_sql_max_open_connections{db_name=\"todo_db\"}", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 0,
+          "min": 0,
+          "max": 100,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 85 }
             ]
           }
         },
