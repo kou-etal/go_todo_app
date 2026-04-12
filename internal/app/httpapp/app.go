@@ -22,6 +22,8 @@ import (
 	"github.com/kou-etal/go_todo_app/internal/infra/security"
 
 	"github.com/kou-etal/go_todo_app/internal/logger"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+
 	"github.com/kou-etal/go_todo_app/internal/observability/metrics"
 	oteltrace "github.com/kou-etal/go_todo_app/internal/observability/trace"
 	"github.com/kou-etal/go_todo_app/internal/presentation/http/handler/task"
@@ -177,6 +179,7 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, http.Handler,
 
 	// Metrics
 	mp := metrics.NewProvider()
+	mp.Registry.MustRegister(collectors.NewDBStatsCollector(xdb.DB, "todo_db"))
 	httpMetrics := metrics.NewHTTPMetrics(mp.Registry)
 	h = middleware.Metrics(httpMetrics)(h)
 
