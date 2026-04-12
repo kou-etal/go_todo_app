@@ -140,6 +140,7 @@ jobs:
             "OTEL_SERVICE_NAME=todo-api" \
             "METRICS_PORT=9090" \
             "PORT=8080" \
+            "SEED_PASSWORD=${{ secrets.SEED_PASSWORD }}" \
             > .env.ci
 
       - name: Start services
@@ -251,6 +252,7 @@ jobs:
               "DISCORD_WEBHOOK_CRITICAL_URL=${{ secrets.DISCORD_WEBHOOK_CRITICAL_URL }}" \
               "DISCORD_WEBHOOK_WARNING_URL=${{ secrets.DISCORD_WEBHOOK_WARNING_URL }}" \
               "PORT=8080" \
+              "SEED_PASSWORD=${{ secrets.SEED_PASSWORD }}" \
               > "${DEPLOY_DIR}/.env.prod.tmp"
 
             # 検証: ファイルが空でないことを確認

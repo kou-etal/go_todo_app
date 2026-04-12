@@ -180,6 +180,7 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, http.Handler,
 	// Metrics
 	mp := metrics.NewProvider()
 	mp.Registry.MustRegister(collectors.NewDBStatsCollector(xdb.DB, "todo_db"))
+	//dbのメトリクス。ここはxdbに依存するからDI層に置く。
 	httpMetrics := metrics.NewHTTPMetrics(mp.Registry)
 	h = middleware.Metrics(httpMetrics)(h)
 
