@@ -129,7 +129,9 @@ func run(ctx context.Context) error {
 			fmt.Fprint(os.Stderr, "    Type 'yes' to continue: ")
 
 			var answer string
-			fmt.Scanln(&answer)
+			if _, err := fmt.Scanln(&answer); err != nil {
+				return fmt.Errorf("failed to read input: %w", err)
+			}
 			if answer != "yes" {
 				return fmt.Errorf("aborted by user")
 			}
