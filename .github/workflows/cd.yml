@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [todo-api, event-worker, compaction]
+        service: [todo-api, event-worker, compaction, seed]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,7 +71,7 @@ jobs:
     needs: build-images
     strategy:
       matrix:
-        service: [todo-api, event-worker, compaction]
+        service: [todo-api, event-worker, compaction, seed]
     steps:
       - uses: actions/checkout@v4
 
@@ -261,7 +261,6 @@ jobs:
               exit 1
             fi
             mv "${DEPLOY_DIR}/.env.prod.tmp" "${DEPLOY_DIR}/.env.prod"
-
             # イメージ pull & 起動
             cd "${DEPLOY_DIR}"
             export DEPLOY_SHA="${DEPLOY_SHA}"
