@@ -123,6 +123,19 @@ func run(ctx context.Context) error {
 
 	if *clean {
 		if existing > 0 {
+			fmt.Fprintln(os.Stderr, "⚠️  WARNING: --clean will DELETE existing seed data!")
+			fmt.Fprintln(os.Stderr, "    This operation is IRREVERSIBLE.")
+			fmt.Fprintf(os.Stderr, "    Target: prefix=%s\n", *prefix)
+			fmt.Fprint(os.Stderr, "    Type 'yes' to continue: ")
+
+			var answer string
+			if _, err := fmt.Scanln(&answer); err != nil {
+				return fmt.Errorf("failed to read input: %w", err)
+			}
+			if answer != "yes" {
+				return fmt.Errorf("aborted by user")
+			}
+
 			// seed は使い捨てバッチ CLI で、JSON 構造ログいらない->slog使わない。
 			log.Printf("seed: cleaning %d existing seed users (prefix=%s)", existing, *prefix)
 			if err := deleteSeedUsers(ctx, xdb, pattern); err != nil {

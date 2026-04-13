@@ -105,6 +105,13 @@ services:
       - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
     restart: unless-stopped
 
+  seed:
+    image: ghcr.io/kou-etal/seed:${DEPLOY_SHA:-latest}
+    env_file: .env.prod
+    depends_on:
+      - todo-db
+    profiles: ["seed"]
+
 volumes:
   todo-db-data:
   minio-data:
