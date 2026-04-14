@@ -29,6 +29,8 @@ tmp/
 
 # env file
 .env
+k6/.env.k6.local
+k6/.env.k6.vps
 
 # Frontend
 frontend/node_modules/

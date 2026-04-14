@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
 
 	"github.com/kou-etal/go_todo_app/internal/config"
 	taskevent "github.com/kou-etal/go_todo_app/internal/domain/event"
@@ -103,9 +104,16 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("prefix %q is too long: user_name %q exceeds 20 chars", *prefix, sampleName)
 	}
 
+	// .env ファイルから環境変数をロード (存在しなければ無視)
+	// Docker 経由なら env_file で渡されるので .env は不要。ローカル go run 用。
+	_ = godotenv.Load()
+
 	cfg, err := config.New()
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
+	}
+	if cfg.SeedPassword == "" {
+		return fmt.Errorf("SEED_PASSWORD is required. Set it in .env or as an environment variable")
 	}
 	xdb, closeDB, err := db.NewMySQL(ctx, cfg)
 	if err != nil {
