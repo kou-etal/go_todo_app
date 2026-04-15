@@ -36,6 +36,9 @@ k6/.env.k6.vps
 frontend/node_modules/
 frontend/.next/
 
+# CI artifacts
+compose-logs.txt
+
 # Editor/IDE
 # .idea/
 # .vscode/

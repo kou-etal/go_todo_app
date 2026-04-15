@@ -90,7 +90,7 @@ func Build(ctx context.Context, cfg *config.Config) (http.Handler, http.Handler,
 	}
 
 	registerRunner := txrunner.New(beginner, txOpts, makeRegisterDeps)
-	passwordHasher := security.NewBcryptHasher(8)
+	passwordHasher := security.NewBcryptHasher(12)
 	tokenGenerator := security.NewRandomTokenGenerator(32)
 	tokenHasher := security.SHA256TokenHasher{}
 	registerUC := register.New(
