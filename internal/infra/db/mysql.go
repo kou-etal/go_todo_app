@@ -41,8 +41,8 @@ func NewMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, func(), error)
 	}
 	xdb := sqlx.NewDb(db, "mysql")
 
-	xdb.SetMaxOpenConns(25)
-	xdb.SetMaxIdleConns(25)
+	xdb.SetMaxOpenConns(100)
+	xdb.SetMaxIdleConns(100)
 	xdb.SetConnMaxLifetime(5 * time.Minute)
 	return xdb, func() { _ = xdb.Close() }, nil
 
