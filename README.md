@@ -1,7 +1,6 @@
 # Go Todo App
 
-Goで構築した Todo REST API。
-クリーンアーキテクチャをベースに、イベント駆動データパイプラインも実装しています。
+Go言語+クリーンアーキテクチャーを学習するために作成したTODO REST API。イベント駆動パイプラインやObservability基盤も実装しています。
 
 ## Architecture
 
@@ -78,23 +77,54 @@ Handler → Usecase → Domain ← Infra
 
 ### Observability
 
-- **Prometheus メトリクス**: Outbox / Compaction Worker の処理時間、キュー深度、リトライ/DLQ カウント
-- **Grafana ダッシュボード**: `docker/grafana/` に設定
-- **構造化ログ**: `log/slog` ベースの Logger インターフェース。Request ID をコンテキスト伝搬
-- **Request ID ミドルウェア**: `X-Request-Id` をリクエスト単位で生成・伝搬
+```
+[App] ──(OTLP)──> [otel-collector] ──> [Tempo]     (トレース)
+  │                    └─ 5% head-based sampling
+  │
+  └─(stdout)──> [Promtail] ──> [Loki]              (ログ)
+
+[App] ──(/metrics)──> [Prometheus] ──> [Grafana]    (メトリクス)
+                                          │
+                                    [Alerting] ──> Discord
+```
+
+- **分散トレーシング**: OpenTelemetry SDK → otel-collector → Tempo
+  - `otelsql` による DB スパン自動計装
+  - `otelhttp` による HTTP スパン自動計装
+  - Usecase / TxRunner のカスタムスパン
+  - otel-collector で 5% head-based sampling
+- **ログ集約**: slog (構造化 JSON) → Promtail → Loki
+  - アクセスログ (method, path, status, duration_us, ip, ua)
+  - trace_id / span_id をログに自動付与
+  - Loki → Tempo Data Link でログからトレースへジャンプ
+- **メトリクス**: Prometheus + Pushgateway
+  - HTTP RED メトリクス (RPS, エラー率, レイテンシ分布)
+  - DB コネクションプール統計 (otelsql)
+  - Outbox / Compaction Worker の処理時間、キュー深度、リトライ/DLQ カウント
+- **ダッシュボード / アラート**: Grafana
+  - Provisioning による自動構成 (datasources, dashboards, alerting rules, contact points)
+  - Discord Webhook によるアラート通知
+- **負荷テスト**: k6 (smoke / load / stress)
+  - constant-arrival-rate / ramping-arrival-rate executor
+  - seed データ CLI (`cmd/seed`) によるテストデータ一括投入
 
 
 ## Tech Stack
 
 | Category | Technology |
 |----------|-----------|
-| Language | Go 1.24 |
+| Language | Go 1.25 |
 | HTTP | net/http (標準ライブラリ) |
 | Database | MySQL 8.0 (sqlx) |
 | Object Storage | S3 互換 (MinIO / aws-sdk-go-v2) |
 | Serialization | Apache Parquet (apache/arrow-go) |
+| Tracing | OpenTelemetry SDK + otel-collector + Tempo |
+| Logging | slog + Promtail + Loki |
 | Metrics | Prometheus + Grafana + Pushgateway |
+| Alerting | Grafana Alerting + Discord Webhook |
+| Load Testing | k6 (smoke / load / stress) |
 | Security | bcrypt (golang.org/x/crypto), SHA-256 |
+| CI/CD | GitHub Actions (build → scan → e2e → deploy) |
 | Container | Docker / Docker Compose |
 
 ## Getting Started
