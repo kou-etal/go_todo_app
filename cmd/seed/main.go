@@ -155,7 +155,7 @@ func run(ctx context.Context) error {
 	}
 
 	// bcrypt 1 回
-	hasher := security.NewBcryptHasher(8)
+	hasher := security.NewBcryptHasher(12)
 	passVO, err := duser.NewUserPasswordFromPlain(cfg.SeedPassword, hasher) //domainバリデーションを通す。
 	if err != nil {
 		return fmt.Errorf("hash seed password: %w", err)
